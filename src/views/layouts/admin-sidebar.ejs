@@ -1,0 +1,116 @@
+<!-- Arix Admin Navigation Sidebar -->
+<aside id="sidebar" class="w-64 bg-[#0B0D2A] border-r border-[#42425B] flex-shrink-0 flex flex-col min-h-[calc(100vh-4rem)]">
+  <div class="p-4 border-b border-[#42425B] flex items-center justify-between">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-7 h-7 rounded-[7px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+        <i class="fa-solid fa-shield-halved text-sm"></i>
+      </div>
+      <span class="font-bold text-xs tracking-wider text-[#F4F4F4] uppercase font-header">Administration</span>
+    </div>
+    <a href="/dashboard" title="Exit to Client Area" class="text-xs text-[#8282A4] hover:text-white px-2 py-1 rounded-[7px] bg-[#1D1D37] border border-[#42425B] transition-colors">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    </a>
+  </div>
+
+  <nav class="flex-1 p-3 space-y-5 overflow-y-auto">
+    
+    <!-- BASIC ADMINISTRATION -->
+    <div>
+      <div class="px-3 mb-2 text-[10px] font-bold text-[#5E5E7F] uppercase tracking-wider">Basic Administration</div>
+      <div class="space-y-1">
+        <a href="/admin" class="arix-nav-link <%= activeSection === 'dashboard' ? 'active' : '' %>">
+          <i class="fa-solid fa-house w-4 mr-1 text-sm"></i>
+          <span>Overview</span>
+        </a>
+        <a href="/admin/settings" class="arix-nav-link <%= activeSection === 'settings' ? 'active' : '' %>">
+          <i class="fa-solid fa-sliders w-4 mr-1 text-sm"></i>
+          <span>Panel Settings</span>
+        </a>
+        <a href="/admin/addons" class="arix-nav-link <%= activeSection === 'addons' ? 'active' : '' %>">
+          <i class="fa-solid fa-puzzle-piece w-4 mr-1 text-sm text-[#7D6BF2]"></i>
+          <span>Arix Addons Hub</span>
+        </a>
+        <a href="/admin/settings#theme" class="arix-badge w-full justify-start text-xs my-1 shadow-md hover:scale-[1.02] transition-transform">
+          <i class="fa-solid fa-wand-magic-sparkles mr-2 text-white"></i>
+          <span>Arix Theme v2.1.3</span>
+        </a>
+        <a href="/admin/api" class="arix-nav-link <%= activeSection === 'api' ? 'active' : '' %>">
+          <i class="fa-solid fa-network-wired w-4 mr-1 text-sm"></i>
+          <span>Application API</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- MANAGEMENT -->
+    <div>
+      <div class="px-3 mb-2 text-[10px] font-bold text-[#5E5E7F] uppercase tracking-wider">Management</div>
+      <div class="space-y-1">
+        <a href="/admin/servers" class="arix-nav-link <%= activeSection === 'servers' ? 'active' : '' %>">
+          <i class="fa-solid fa-server w-4 mr-1 text-sm"></i>
+          <span>Servers</span>
+        </a>
+        <a href="/admin/users" class="arix-nav-link <%= activeSection === 'users' ? 'active' : '' %>">
+          <i class="fa-solid fa-users w-4 mr-1 text-sm"></i>
+          <span>Users</span>
+        </a>
+        <a href="/admin/nodes" class="arix-nav-link <%= activeSection === 'nodes' ? 'active' : '' %>">
+          <i class="fa-solid fa-hard-drive w-4 mr-1 text-sm"></i>
+          <span>Nodes & Ports</span>
+        </a>
+        <a href="/admin/locations" class="arix-nav-link <%= activeSection === 'locations' ? 'active' : '' %>">
+          <i class="fa-solid fa-globe w-4 mr-1 text-sm"></i>
+          <span>Locations</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- SERVICE TEMPLATES -->
+    <div>
+      <div class="px-3 mb-2 text-[10px] font-bold text-[#5E5E7F] uppercase tracking-wider">Service Templates</div>
+      <div class="space-y-1">
+        <a href="/admin/nests" class="arix-nav-link <%= activeSection === 'nests' ? 'active' : '' %>">
+          <i class="fa-solid fa-cubes w-4 mr-1 text-sm"></i>
+          <span>Nests & Eggs</span>
+        </a>
+        <a href="/admin/database" class="arix-nav-link <%= activeSection === 'database' ? 'active' : '' %>">
+          <i class="fa-solid fa-database w-4 mr-1 text-sm"></i>
+          <span>Database Hosts</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- SYSTEM CONTROL -->
+    <div>
+      <div class="px-3 mb-2 text-[10px] font-bold text-[#5E5E7F] uppercase tracking-wider">System Control</div>
+      <div class="space-y-1">
+        <a href="/admin/activity" class="arix-nav-link <%= activeSection === 'activity' ? 'active' : '' %>">
+          <i class="fa-solid fa-clock-rotate-left w-4 mr-1 text-sm"></i>
+          <span>Activity Logs</span>
+        </a>
+        <a href="/admin/system" class="arix-nav-link <%= activeSection === 'system' ? 'active' : '' %>">
+          <i class="fa-solid fa-circle-info w-4 mr-1 text-sm"></i>
+          <span>System Info</span>
+        </a>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- Node & Host Status Footer in Sidebar -->
+  <div class="p-3 border-t border-[#42425B] bg-[#040519]/40 text-xs">
+    <div class="flex items-center justify-between text-[#8282A4]">
+      <span class="flex items-center">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 shadow-[0_0_6px_#10b981]"></span>
+        API Daemon
+      </span>
+      <span class="font-mono text-[11px] text-[#5E5E7F]">:3003</span>
+    </div>
+    <div class="flex items-center justify-between text-[#8282A4] mt-1.5">
+      <span class="flex items-center">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 shadow-[0_0_6px_#10b981]"></span>
+        SFTP Server
+      </span>
+      <span class="font-mono text-[11px] text-[#5E5E7F]">:3004</span>
+    </div>
+  </div>
+</aside>

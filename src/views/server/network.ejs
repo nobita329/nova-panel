@@ -1,0 +1,162 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Allocations List -->
+    <div class="lg:col-span-2">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Port Allocations</h2>
+        <p class="text-xs text-[#8282A4] mt-0.5">Network ports assigned to this server container for external connections.</p>
+      </div>
+
+      <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3 px-4">IP Address</th>
+              <th class="py-3 px-4">Port</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Type</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40 text-xs font-mono">
+            <% allocations.forEach(a => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-semibold"><%= a.ip === '0.0.0.0' ? '0.0.0.0 (All Interfaces)' : a.ip %></td>
+                <td class="py-3.5 px-4 text-[#7D6BF2] font-bold text-sm">
+                  <span class="cursor-pointer hover:text-white" onclick="window.copyToClipboard('<%= a.port %>', this)" title="Click to copy port"><%= a.port %></span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="arix-badge-success text-[10px] uppercase font-bold">
+                    Assigned
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <% if (a.port === server.primary_port) { %>
+                    <span class="px-2.5 py-1 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/40 text-[10px] uppercase font-bold">
+                      Primary
+                    </span>
+                  <% } else { %>
+                    <span class="text-[#8282A4] text-[11px]">Secondary</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Arix Addon: Record Generator -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B] mt-6">
+        <div class="flex items-center space-x-2 mb-2">
+          <div class="w-7 h-7 rounded-[7px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+            <i class="fa-solid fa-network-wired text-xs"></i>
+          </div>
+          <h2 class="text-base font-bold text-[#F4F4F4] font-header">Record Generator</h2>
+        </div>
+        <p class="text-xs text-[#8282A4] mb-4">Generate the exact DNS records needed to point your personal custom domain to this server without having to expose your numeric port.</p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Enter Your Desired Domain</label>
+            <input type="text" id="rec-gen-domain" oninput="updateRecordGen(this.value)" placeholder="e.g. play.example.com" value="play.example.com" class="arix-input text-xs w-full font-mono">
+          </div>
+
+          <div class="space-y-3 font-mono text-xs">
+            <!-- A Record Box -->
+            <div class="p-3.5 rounded-[8px] bg-[#0B0D2A] border border-[#42425B] grid grid-cols-1 md:grid-cols-4 items-center gap-2">
+              <div class="text-[10px] text-[#8282A4] uppercase font-bold">A RECORD</div>
+              <div>
+                <span class="text-[10px] text-[#8282A4] block">NAME:</span>
+                <span id="rec-a-name" class="text-white font-bold">play.example.com</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-[#8282A4] block">CONTENT:</span>
+                <span class="text-emerald-400">127.0.0.1</span>
+              </div>
+              <div class="text-right">
+                <button onclick="copyRec('127.0.0.1')" class="arix-btn arix-btn-secondary text-[11px] py-1 px-2.5">
+                  <i class="fa-solid fa-copy mr-1"></i> Copy
+                </button>
+              </div>
+            </div>
+
+            <!-- SRV Record Box -->
+            <div class="p-3.5 rounded-[8px] bg-[#0B0D2A] border border-[#42425B] grid grid-cols-1 md:grid-cols-4 items-center gap-2">
+              <div class="text-[10px] text-[#8282A4] uppercase font-bold">SRV RECORD</div>
+              <div>
+                <span class="text-[10px] text-[#8282A4] block">NAME:</span>
+                <span id="rec-srv-name" class="text-[#7D6BF2] font-bold">_minecraft._tcp.play.example.com</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-[#8282A4] block">CONTENT:</span>
+                <span id="rec-srv-content" class="text-white">0 5 <%= server.primary_port %> play.example.com</span>
+              </div>
+              <div class="text-right">
+                <button onclick="copyRec(document.getElementById('rec-srv-content').textContent)" class="arix-btn arix-btn-secondary text-[11px] py-1 px-2.5">
+                  <i class="fa-solid fa-copy mr-1"></i> Copy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SFTP Details Card -->
+    <div>
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">SFTP Connection</h2>
+        <p class="text-xs text-[#8282A4] mt-0.5">Use FileZilla or WinSCP to transfer files securely.</p>
+      </div>
+
+      <div class="arix-card p-5 shadow-xl space-y-3 border border-[#42425B]">
+        <div class="bg-[#0B0D2A] p-3 rounded-[7px] border border-[#42425B]">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8282A4] block">Server Address</span>
+          <span class="font-mono text-xs text-[#F4F4F4] select-all cursor-pointer hover:text-white" onclick="window.copyToClipboard('127.0.0.1', this)">127.0.0.1</span>
+        </div>
+
+        <div class="bg-[#0B0D2A] p-3 rounded-[7px] border border-[#42425B]">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8282A4] block">SFTP Port</span>
+          <span class="font-mono text-xs text-[#F4F4F4] select-all cursor-pointer hover:text-white" onclick="window.copyToClipboard('<%= sftpPort %>', this)"><%= sftpPort %></span>
+        </div>
+
+        <div class="bg-[#0B0D2A] p-3 rounded-[7px] border border-[#42425B]">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8282A4] block">Username</span>
+          <span class="font-mono text-xs text-[#7D6BF2] select-all font-semibold cursor-pointer hover:text-[#5E46E5]" onclick="window.copyToClipboard('<%= user.username %>.<%= server.id %>', this)"><%= user.username %>.<%= server.id %></span>
+        </div>
+
+        <div class="bg-[#0B0D2A] p-3 rounded-[7px] border border-[#42425B]">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8282A4] block">Password</span>
+          <span class="font-mono text-xs text-[#8282A4]">Your Nova Account Password</span>
+        </div>
+
+        <div class="p-3 rounded-[7px] bg-[#4A35CF]/10 border border-[#4A35CF]/30 text-[#D8EFFF] text-xs leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1 text-[#7D6BF2]"></i>
+          Connect with protocol <strong>SFTP (SSH File Transfer Protocol)</strong>.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+  function updateRecordGen(dom) {
+    const val = (dom || 'play.example.com').trim();
+    document.getElementById('rec-a-name').textContent = val;
+    document.getElementById('rec-srv-name').textContent = `_minecraft._tcp.${val}`;
+    document.getElementById('rec-srv-content').textContent = `0 5 <%= server.primary_port %> ${val}`;
+  }
+
+  function copyRec(text) {
+    navigator.clipboard.writeText(text);
+    alert('Copied to clipboard: ' + text);
+  }
+</script>
+
+<%- include('../layouts/footer') %>

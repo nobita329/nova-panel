@@ -1,0 +1,87 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+          <span><%= error %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+        <i class="fa-solid fa-location-dot text-[#7D6BF2] mr-2.5"></i>
+        Locations
+      </h1>
+      <p class="text-sm text-[#8282A4] mt-1">Geographic regions and datacenters for node grouping.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Add Location Form -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <i class="fa-solid fa-plus-circle text-[#7D6BF2] mr-2"></i>
+          Add Location
+        </h2>
+
+        <form action="/admin/locations" method="POST" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Short Code</label>
+            <input type="text" name="short_code" placeholder="e.g. us-east, eu-central" required class="arix-input font-mono text-xs">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Description</label>
+            <input type="text" name="description" placeholder="e.g. Frankfurt, Germany Datacenter" class="arix-input">
+          </div>
+
+          <button type="submit" class="w-full arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+            Save Location
+          </button>
+        </form>
+      </div>
+
+      <!-- Locations List -->
+      <div class="lg:col-span-2 arix-card overflow-hidden shadow-xl border border-[#42425B]">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3 px-4">Code</th>
+              <th class="py-3 px-4">Description</th>
+              <th class="py-3 px-4">Nodes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40 text-xs">
+            <% locations.forEach(l => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="py-3.5 px-4 font-mono font-bold text-[#7D6BF2]"><%= l.short_code %></td>
+                <td class="py-3.5 px-4 text-[#D5D5DB]"><%= l.description || '-' %></td>
+                <td class="py-3.5 px-4 font-semibold text-[#F4F4F4]"><%= l.node_count || 0 %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  
+  <% if (panelFavicon) { %>
+    <link rel="icon" href="<%= panelFavicon %>">
+  <% } else { %>
+    <link rel="icon" href="/arix/Arix.png">
+  <% } %>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            arix: '#4A35CF',
+            'arix-hover': '#5F48E8',
+            gray: {
+              50: '#F4F4F4', 100: '#D5D5DB', 200: '#B2B2C1', 300: '#8282A4',
+              400: '#5E5E7F', 500: '#42425B', 600: '#2B2B40', 700: '#1D1D37',
+              800: '#0B0D2A', 900: '#040519'
+            }
+          },
+          fontFamily: {
+            sans: ['"Rubik"', '"Inter"', 'system-ui', 'sans-serif'],
+            header: ['"IBM Plex Sans"', '"Inter"', 'sans-serif'],
+            mono: ['"Source Code Pro"', '"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/arix.css">
+  <script src="/js/arix.js" defer></script>
+</head>
+<body class="bg-[#040519] text-[#B2B2C1] min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+  style="background: linear-gradient(180deg, rgba(4, 5, 25, 0.85) 0%, rgba(11, 13, 42, 0.95) 100%), url('/arix/background-login.png') center/cover no-repeat fixed;">
+
+  <!-- Ambient Glow effect -->
+  <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#4A35CF]/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+  <div class="w-full max-w-[440px] relative z-10 my-auto">
+    
+    <!-- Logo & Brand Title -->
+    <div class="text-center mb-8">
+      <% if (panelLogo) { %>
+        <img src="<%= panelLogo %>" alt="<%= panelName %>" class="h-14 mx-auto mb-3 object-contain">
+      <% } else { %>
+        <img src="/arix/Arix.png" alt="Arix" class="h-12 mx-auto mb-3 object-contain hover:scale-105 transition-transform">
+      <% } %>
+      <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header"><%= panelName || 'Nova' %> Panel</h1>
+      <p class="text-xs text-[#8282A4] mt-1.5 font-medium">Powered by Arix Theme v2.1.3 &bull; Game & App Control</p>
+    </div>
+
+    <!-- Arix Glass Login Card -->
+    <div class="bg-[#1D1D37]/80 backdrop-blur-xl border border-[#42425B] rounded-[10px] p-6 sm:p-8 shadow-2xl shadow-black/60">
+      
+      <% if (error) { %>
+        <div class="mb-5 p-3 rounded-[7px] bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center">
+          <i class="fa-solid fa-circle-exclamation mr-2 text-sm flex-shrink-0 text-rose-400"></i>
+          <span><%= error %></span>
+        </div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" class="space-y-4">
+        <input type="hidden" name="redirect" value="<%= redirect %>">
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-[#8282A4] mb-1.5">Username or Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#5E5E7F]">
+              <i class="fa-solid fa-circle-user text-sm"></i>
+            </span>
+            <input type="text" name="username" required autofocus placeholder="admin or username@nova.local"
+              class="w-full pl-10 pr-3.5 py-2.5 bg-[#2B2B40]/70 border border-[#42425B] rounded-[7px] text-[#F4F4F4] placeholder-[#5E5E7F] text-sm focus:outline-none focus:border-[#4A35CF] focus:ring-1 focus:ring-[#4A35CF] transition-all">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-[#8282A4]">Password</label>
+            <a href="/auth/forgot-password" class="text-xs text-[#7D6BF2] hover:text-[#5E46E5] transition-colors">Forgot password?</a>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#5E5E7F]">
+              <i class="fa-solid fa-key text-sm"></i>
+            </span>
+            <input type="password" name="password" required placeholder="••••••••"
+              class="w-full pl-10 pr-3.5 py-2.5 bg-[#2B2B40]/70 border border-[#42425B] rounded-[7px] text-[#F4F4F4] placeholder-[#5E5E7F] text-sm focus:outline-none focus:border-[#4A35CF] focus:ring-1 focus:ring-[#4A35CF] transition-all">
+          </div>
+        </div>
+
+        <div class="flex items-center pt-1">
+          <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded bg-[#2B2B40] border-[#42425B] text-[#4A35CF] focus:ring-[#4A35CF]">
+          <label for="remember" class="ml-2 text-xs text-[#8282A4]">Stay signed in on this device</label>
+        </div>
+
+        <button type="submit" class="w-full mt-2 py-3 px-4 rounded-[7px] bg-[#4A35CF] hover:bg-[#5F48E8] text-white font-semibold text-sm shadow-lg shadow-[#4A35CF]/30 transition-all flex items-center justify-center">
+          <span>Sign In to Dashboard</span>
+          <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+        </button>
+      </form>
+
+      <!-- Arix Socials / Community Links -->
+      <div class="flex items-center justify-center space-x-6 mt-6 pt-5 border-t border-[#42425B]/60 text-xs text-[#8282A4]">
+        <a href="https://discord.gg/geCjrRbAwC" target="_blank" class="hover:text-white flex items-center transition-colors">
+          <i class="fa-brands fa-discord mr-1.5 text-[#7D6BF2]"></i> Community Discord
+        </a>
+        <a href="https://arix.gg/docs" target="_blank" class="hover:text-white flex items-center transition-colors">
+          <i class="fa-solid fa-book mr-1.5 text-[#5E5E7F]"></i> Documentation
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer Copyright Notice -->
+    <div class="mt-5 text-center text-xs text-[#5E5E7F]">
+      <p>&copy; <%= new Date().getFullYear() %> <%= panelName || 'Nova' %> &bull; Designed by Arix Theme</p>
+    </div>
+
+  </div>
+
+</body>
+</html>

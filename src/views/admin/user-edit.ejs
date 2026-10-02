@@ -1,0 +1,125 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">Edit User: <%= targetUser.username %></h1>
+        <p class="text-sm text-[#8282A4] mt-1">Modify account details, roles, password, and status.</p>
+      </div>
+      <a href="/admin/users" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        &larr; Back to Users
+      </a>
+    </div>
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Edit Form -->
+      <div class="lg:col-span-2 arix-card p-6 sm:p-8 shadow-xl border border-[#42425B]">
+        <form action="/admin/users/<%= targetUser.id %>" method="POST" class="space-y-4">
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">First Name</label>
+              <input type="text" name="first_name" value="<%= targetUser.first_name || '' %>" class="arix-input">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Last Name</label>
+              <input type="text" name="last_name" value="<%= targetUser.last_name || '' %>" class="arix-input">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Username</label>
+            <input type="text" value="<%= targetUser.username %>" disabled
+              class="arix-input opacity-60 cursor-not-allowed font-mono">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Email Address</label>
+            <input type="email" name="email" value="<%= targetUser.email %>" required class="arix-input">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">New Password (leave blank to keep current)</label>
+            <input type="password" name="password" placeholder="••••••••" minlength="6" class="arix-input">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Role</label>
+              <select name="is_admin" class="arix-select">
+                <option value="0" <%= !targetUser.is_admin ? 'selected' : '' %>>Regular Client</option>
+                <option value="1" <%= targetUser.is_admin ? 'selected' : '' %>>Administrator</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Account Status</label>
+              <select name="status" class="arix-select">
+                <option value="active" <%= targetUser.status === 'active' ? 'selected' : '' %>>Active</option>
+                <option value="suspended" <%= targetUser.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#42425B]/40 flex items-center justify-end space-x-3">
+            <button type="submit" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- User Servers List -->
+      <div class="arix-card p-6 shadow-xl flex flex-col justify-between border border-[#42425B]">
+        <div>
+          <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+            <i class="fa-solid fa-server text-[#7D6BF2] mr-2"></i>
+            Owned Servers
+          </h2>
+
+          <% if (userServers.length === 0) { %>
+            <p class="text-xs text-[#8282A4] py-4 text-center">User has no servers assigned.</p>
+          <% } else { %>
+            <div class="space-y-2">
+              <% userServers.forEach(srv => { %>
+                <div class="p-3 bg-[#0B0D2A] rounded-[8px] border border-[#42425B] flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-[#F4F4F4] text-xs block"><%= srv.name %></span>
+                    <span class="text-[10px] text-[#8282A4] font-mono">Port: <%= srv.primary_port %></span>
+                  </div>
+                  <a href="/server/<%= srv.id %>/console" class="text-xs text-[#7D6BF2] hover:underline font-semibold">Manage</a>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="pt-4 mt-6 border-t border-[#42425B]/40">
+          <form action="/admin/users/<%= targetUser.id %>/delete" method="POST" onsubmit="return confirm('Permanently delete this user?')">
+            <button type="submit" class="w-full arix-btn arix-btn-danger text-xs py-2 font-semibold">
+              <i class="fa-solid fa-trash-can mr-1"></i> Delete User Account
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

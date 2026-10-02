@@ -1,0 +1,189 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-400">
+          <i class="fa-solid fa-code text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Advanced Service Variables</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Manage runtime environment variables (.env files) without risking format corruption.</p>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button onclick="createBackup()" class="arix-btn arix-btn-secondary text-xs">
+        <i class="fa-solid fa-box-archive mr-1.5"></i> Create Backup
+      </button>
+      <button onclick="openAddModal()" class="arix-btn arix-btn-primary text-xs font-semibold">
+        <i class="fa-solid fa-plus mr-1.5"></i> Add Variable
+      </button>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <% const envEntries = Object.entries(variables); %>
+    <% if (envEntries.length === 0) { %>
+      <div class="arix-card p-12 text-center text-[#8282A4]">
+        <i class="fa-solid fa-file-code text-4xl mb-3 text-[#42425B]"></i>
+        <p class="text-sm">No environment variables or .env files found.</p>
+        <button onclick="openAddModal()" class="arix-btn arix-btn-primary text-xs font-semibold mt-3">
+          Create First Variable
+        </button>
+      </div>
+    <% } else { %>
+      <% envEntries.forEach(([fileName, vars]) => { %>
+        <div class="arix-card overflow-hidden">
+          <div class="p-4 bg-[#16162C] border-b border-[#42425B] flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-file-lines text-teal-400"></i>
+              <span class="font-mono text-xs font-bold text-white"><%= fileName %></span>
+            </div>
+            <a href="/server/<%= server.id %>/files" class="text-xs text-[#8282A4] hover:text-white">
+              <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Raw File
+            </a>
+          </div>
+
+          <% const varKeys = Object.entries(vars); %>
+          <% if (varKeys.length === 0) { %>
+            <div class="p-6 text-center text-xs text-[#8282A4]">No variables defined in this file.</div>
+          <% } else { %>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#1D1D37]/50 text-[#8282A4] uppercase font-semibold text-[10px] tracking-wider border-b border-[#42425B]">
+                  <tr>
+                    <th class="p-3.5 w-1/3">Key</th>
+                    <th class="p-3.5">Value</th>
+                    <th class="p-3.5 text-right w-28">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#42425B] text-[#D5D5DB]">
+                  <% varKeys.forEach(([k, v]) => { %>
+                    <tr class="hover:bg-[#1D1D37]/40 transition-colors">
+                      <td class="p-3.5 font-mono font-bold text-teal-400"><%= k %></td>
+                      <td class="p-3.5 font-mono text-[#D5D5DB] break-all"><%= v %></td>
+                      <td class="p-3.5 text-right space-x-2">
+                        <button onclick="openEditModal('<%= fileName %>', '<%= k %>', '<%= v.replace(/'/g, "\\'") %>')" class="text-[#8282A4] hover:text-white" title="Edit">
+                          <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteVar('<%= fileName %>', '<%= k %>')" class="text-rose-400/80 hover:text-rose-400" title="Delete">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+</div>
+
+<!-- Variable Modal -->
+<div id="var-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-md w-full p-6 space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-[#42425B]">
+      <h3 id="var-modal-title" class="text-sm font-bold text-white font-header">Add Variable</h3>
+      <button onclick="closeModal()" class="text-[#8282A4] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <form onsubmit="submitVariable(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-1.5">File Target</label>
+        <input type="text" id="var-file" value=".env" class="arix-input text-xs w-full font-mono">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-1.5">Variable Key</label>
+        <input type="text" id="var-key" required placeholder="e.g. PORT, NODE_ENV, DATABASE_URL" class="arix-input text-xs w-full font-mono uppercase">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-1.5">Variable Value</label>
+        <input type="text" id="var-val" required placeholder="Variable value" class="arix-input text-xs w-full font-mono">
+      </div>
+
+      <div class="pt-2 flex justify-end space-x-2">
+        <button type="button" onclick="closeModal()" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs font-semibold">Save Variable</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddModal() {
+    document.getElementById('var-modal-title').textContent = 'Add Variable';
+    document.getElementById('var-key').value = '';
+    document.getElementById('var-key').readOnly = false;
+    document.getElementById('var-val').value = '';
+    document.getElementById('var-modal').classList.remove('hidden');
+  }
+
+  function openEditModal(file, key, val) {
+    document.getElementById('var-modal-title').textContent = 'Edit Variable';
+    document.getElementById('var-file').value = file;
+    document.getElementById('var-key').value = key;
+    document.getElementById('var-key').readOnly = true;
+    document.getElementById('var-val').value = val;
+    document.getElementById('var-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('var-modal').classList.add('hidden');
+  }
+
+  async function submitVariable(e) {
+    e.preventDefault();
+    const envFile = document.getElementById('var-file').value.trim();
+    const key = document.getElementById('var-key').value.trim();
+    const value = document.getElementById('var-val').value.trim();
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/variables`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ envFile, key, value })
+      });
+      if (!res.ok) throw new Error('Failed to save variable');
+      window.location.reload();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
+  async function deleteVar(envFile, key) {
+    if (!confirm(`Delete variable "${key}"?`)) return;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/variables`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ envFile, key })
+      });
+      if (!res.ok) throw new Error('Failed to delete variable');
+      window.location.reload();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
+  async function createBackup() {
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/variables/backup`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Backup failed');
+      alert(`Created backup: ${data.name}`);
+      window.location.reload();
+    } catch (err) {
+      alert(`Backup error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

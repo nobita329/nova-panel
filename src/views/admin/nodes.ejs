@@ -1,0 +1,79 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-network-wired text-[#7D6BF2] mr-2.5"></i>
+          Nodes & Ports
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Manage physical/virtual host machines running Docker daemons and port allocations.</p>
+      </div>
+
+      <a href="/admin/nodes/new" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+        <i class="fa-solid fa-plus mr-1"></i> Create New Node
+      </a>
+    </div>
+
+    <!-- Nodes Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <div class="overflow-x-auto">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3.5 px-4">Node Name</th>
+              <th class="py-3.5 px-4">Location</th>
+              <th class="py-3.5 px-4">Connection FQDN</th>
+              <th class="py-3.5 px-4">Memory Limit</th>
+              <th class="py-3.5 px-4">Disk Limit</th>
+              <th class="py-3.5 px-4">Servers</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-right">Allocations</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40 text-xs">
+            <% nodes.forEach(n => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="py-3.5 px-4 font-bold text-[#F4F4F4]"><%= n.name %></td>
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-mono"><%= n.location_code || 'local' %></td>
+                <td class="py-3.5 px-4 font-mono text-[#7D6BF2]">
+                  <%= n.scheme %>://<%= n.fqdn %>:<%= n.daemon_port %>
+                  <span class="text-[#8282A4] block text-[10px]">SFTP: <%= n.sftp_port %></span>
+                </td>
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-mono"><%= (n.memory_limit / 1024).toFixed(0) %> GB</td>
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-mono"><%= (n.disk_limit / 1024).toFixed(0) %> GB</td>
+                <td class="py-3.5 px-4 font-bold text-[#F4F4F4]"><%= n.server_count || 0 %></td>
+                <td class="py-3.5 px-4">
+                  <span class="arix-badge-success text-[10px] uppercase font-bold py-0.5 px-2">
+                    Online
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <a href="/admin/nodes/<%= n.id %>/allocations" class="arix-btn arix-btn-secondary text-xs py-1 px-3">
+                    <i class="fa-solid fa-arrows-split-up-and-left text-[#7D6BF2]"></i> Ports
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

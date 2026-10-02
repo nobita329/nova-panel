@@ -1,0 +1,49 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <div class="mb-6">
+    <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Server Activity Logs</h2>
+    <p class="text-xs text-[#8282A4] mt-0.5">Audit log of power events, file modifications, commands, and backups for this instance.</p>
+  </div>
+
+  <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+    <% if (logs.length === 0) { %>
+      <div class="text-center py-12 text-[#8282A4] text-sm">
+        <i class="fa-solid fa-list-check text-3xl mb-2 text-[#42425B] block"></i>
+        No server activity recorded yet.
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3 px-4">Event</th>
+              <th class="py-3 px-4">Details</th>
+              <th class="py-3 px-4">IP Address</th>
+              <th class="py-3 px-4">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40">
+            <% logs.forEach(log => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-0.5 rounded-[7px] text-xs font-mono font-semibold bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/30">
+                    <%= log.event %>
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-mono text-xs"><%= log.details || '-' %></td>
+                <td class="py-3.5 px-4 text-[#8282A4] font-mono text-xs"><%= log.ip_address || '127.0.0.1' %></td>
+                <td class="py-3.5 px-4 text-[#8282A4] text-xs font-sans"><%= new Date(log.created_at).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+</main>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,166 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Properties Editor</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Visually configure all <code class="text-[#D5D5DB]">server.properties</code> without manually editing configuration files.</p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <button onclick="saveAllProperties()" id="save-properties-btn" class="arix-btn arix-btn-primary text-xs font-semibold px-4 py-2">
+        <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Filter -->
+  <div class="arix-card p-4 mb-6">
+    <div class="relative">
+      <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[#8282A4]"></i>
+      <input type="text" id="prop-search" oninput="filterProperties(this.value)" placeholder="Search for property (e.g. pvp, gamemode, difficulty, port, motd, flight)..." class="arix-input pl-9 text-xs w-full">
+    </div>
+  </div>
+
+  <!-- Properties Grid -->
+  <div class="arix-card p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="properties-container">
+      
+      <% 
+        const gamemodes = ['survival', 'creative', 'adventure', 'spectator'];
+        const difficulties = ['peaceful', 'easy', 'normal', 'hard'];
+        const entries = Object.entries(properties);
+      %>
+
+      <% entries.forEach(([key, val]) => { %>
+        <div class="p-4 rounded-[8px] bg-[#16162C] border border-[#42425B] flex flex-col justify-between prop-item" data-key="<%= key %>">
+          
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-white font-header capitalize"><%= key.replace(/-/g, ' ') %></span>
+            <a href="https://minecraft.wiki/w/Server.properties#<%= key %>" target="_blank" title="Minecraft Wiki Documentation" class="text-xs text-[#8282A4] hover:text-[#7D6BF2]">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+
+          <div class="mt-2">
+            <% if (typeof val === 'boolean') { %>
+              <div class="flex items-center space-x-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" name="<%= key %>" <%= val ? 'checked' : '' %> class="sr-only peer prop-input-bool">
+                  <div class="w-11 h-6 bg-[#2B2B47] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4A35CF]"></div>
+                </label>
+                <span class="text-xs text-[#8282A4] font-semibold"><%= val ? 'Enabled' : 'Disabled' %></span>
+              </div>
+            <% } else if (key === 'gamemode') { %>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <% gamemodes.forEach(gm => { %>
+                  <button type="button" onclick="selectPill('<%= key %>', '<%= gm %>', this)" class="px-2 py-1.5 rounded-[6px] text-xs font-semibold capitalize border transition-all pill-btn <%= val === gm ? 'bg-[#4A35CF] border-[#4A35CF] text-white shadow-sm' : 'bg-[#1D1D37] border-[#42425B] text-[#8282A4] hover:text-white' %>" data-field="<%= key %>" data-val="<%= gm %>">
+                    <%= gm %>
+                  </button>
+                <% }) %>
+                <input type="hidden" name="<%= key %>" value="<%= val %>" class="prop-input-hidden">
+              </div>
+            <% } else if (key === 'difficulty') { %>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <% difficulties.forEach(diff => { %>
+                  <button type="button" onclick="selectPill('<%= key %>', '<%= diff %>', this)" class="px-2 py-1.5 rounded-[6px] text-xs font-semibold capitalize border transition-all pill-btn <%= val === diff ? 'bg-[#4A35CF] border-[#4A35CF] text-white shadow-sm' : 'bg-[#1D1D37] border-[#42425B] text-[#8282A4] hover:text-white' %>" data-field="<%= key %>" data-val="<%= diff %>">
+                    <%= diff %>
+                  </button>
+                <% }) %>
+                <input type="hidden" name="<%= key %>" value="<%= val %>" class="prop-input-hidden">
+              </div>
+            <% } else { %>
+              <input type="text" name="<%= key %>" value="<%= val %>" class="arix-input text-xs w-full prop-input-text font-mono">
+            <% } %>
+          </div>
+
+        </div>
+      <% }) %>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function filterProperties(query) {
+    const q = query.toLowerCase().replace(/-/g, ' ');
+    const items = document.querySelectorAll('.prop-item');
+    items.forEach(it => {
+      const key = it.getAttribute('data-key').toLowerCase().replace(/-/g, ' ');
+      if (key.includes(q)) {
+        it.style.display = 'flex';
+      } else {
+        it.style.display = 'none';
+      }
+    });
+  }
+
+  function selectPill(key, val, btn) {
+    const container = btn.closest('.prop-item');
+    container.querySelectorAll('.pill-btn').forEach(b => {
+      b.className = 'px-2 py-1.5 rounded-[6px] text-xs font-semibold capitalize border transition-all pill-btn bg-[#1D1D37] border-[#42425B] text-[#8282A4] hover:text-white';
+    });
+    btn.className = 'px-2 py-1.5 rounded-[6px] text-xs font-semibold capitalize border transition-all pill-btn bg-[#4A35CF] border-[#4A35CF] text-white shadow-sm';
+    container.querySelector('.prop-input-hidden').value = val;
+  }
+
+  async function saveAllProperties() {
+    const btn = document.getElementById('save-properties-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving...`;
+
+    const payload = {};
+
+    // Collect booleans
+    document.querySelectorAll('.prop-input-bool').forEach(cb => {
+      payload[cb.name] = cb.checked;
+    });
+
+    // Collect text & numbers
+    document.querySelectorAll('.prop-input-text').forEach(inp => {
+      const v = inp.value.trim();
+      if (!isNaN(Number(v)) && v !== '') {
+        payload[inp.name] = Number(v);
+      } else {
+        payload[inp.name] = v;
+      }
+    });
+
+    // Collect hidden pill inputs
+    document.querySelectorAll('.prop-input-hidden').forEach(inp => {
+      payload[inp.name] = inp.value;
+    });
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/properties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ properties: payload })
+      });
+      if (!res.ok) throw new Error('Failed to update properties');
+
+      btn.className = 'arix-btn arix-btn-success text-xs font-semibold px-4 py-2';
+      btn.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i> Saved!`;
+      setTimeout(() => {
+        btn.className = 'arix-btn arix-btn-primary text-xs font-semibold px-4 py-2';
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }, 1500);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      alert(`Save error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

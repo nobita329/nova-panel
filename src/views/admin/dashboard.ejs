@@ -1,0 +1,159 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+    
+    <!-- Title & Quick Actions Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-chart-line text-[#7D6BF2] mr-2.5"></i>
+          Admin Overview
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Manage infrastructure, users, servers, and panel configuration.</p>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <a href="/admin/servers/new" class="arix-btn arix-btn-primary text-xs py-2 px-3.5">
+          <i class="fa-solid fa-plus"></i> New Server
+        </a>
+        <a href="/admin/users/new" class="arix-btn arix-btn-secondary text-xs py-2 px-3.5">
+          <i class="fa-solid fa-user-plus text-[#7D6BF2]"></i> New User
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats Cards Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      
+      <div class="arix-card p-5 shadow-xl border border-[#42425B] relative overflow-hidden">
+        <div class="arix-status-indicator arix-status-online"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[#8282A4]">Total Users</span>
+          <i class="fa-solid fa-users text-[#7D6BF2]"></i>
+        </div>
+        <p class="text-2xl font-bold text-[#F4F4F4] mt-1 font-mono"><%= counts.users %></p>
+        <a href="/admin/users" class="text-xs text-[#7D6BF2] hover:text-[#5E46E5] font-semibold mt-2 inline-block">Manage users &rarr;</a>
+      </div>
+
+      <div class="arix-card p-5 shadow-xl border border-[#42425B] relative overflow-hidden">
+        <div class="arix-status-indicator arix-status-online"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[#8282A4]">Total Servers</span>
+          <i class="fa-solid fa-server text-[#7D6BF2]"></i>
+        </div>
+        <p class="text-2xl font-bold text-[#F4F4F4] mt-1 font-mono">
+          <%= counts.servers %>
+          <span class="text-xs font-normal text-emerald-400 ml-1.5 font-mono">(<%= counts.onlineServers %> online)</span>
+        </p>
+        <a href="/admin/servers" class="text-xs text-[#7D6BF2] hover:text-[#5E46E5] font-semibold mt-2 inline-block">View servers &rarr;</a>
+      </div>
+
+      <div class="arix-card p-5 shadow-xl border border-[#42425B] relative overflow-hidden">
+        <div class="arix-status-indicator arix-status-online"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[#8282A4]">Active Nodes</span>
+          <i class="fa-solid fa-network-wired text-cyan-400"></i>
+        </div>
+        <p class="text-2xl font-bold text-[#F4F4F4] mt-1 font-mono"><%= counts.nodes %></p>
+        <a href="/admin/nodes" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold mt-2 inline-block">Configure nodes &rarr;</a>
+      </div>
+
+      <div class="arix-card p-5 shadow-xl border border-[#42425B] relative overflow-hidden">
+        <div class="arix-status-indicator arix-status-online"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[#8282A4]">Templates (Nests)</span>
+          <i class="fa-solid fa-feather-pointed text-amber-400"></i>
+        </div>
+        <p class="text-2xl font-bold text-[#F4F4F4] mt-1 font-mono"><%= counts.nests %> <span class="text-xs font-normal text-[#8282A4]">(<%= counts.eggs %> eggs)</span></p>
+        <a href="/admin/nests" class="text-xs text-amber-400 hover:text-amber-300 font-semibold mt-2 inline-block">Manage eggs &rarr;</a>
+      </div>
+
+    </div>
+
+    <!-- System Resource Overview -->
+    <div class="arix-card p-6 shadow-xl mb-8 border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-gauge text-[#7D6BF2] mr-2"></i>
+        Host Node Resource Telemetry
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Memory Bar -->
+        <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span class="text-[#8282A4] font-semibold uppercase tracking-wider">Memory Usage</span>
+            <span class="font-mono text-[#F4F4F4] font-semibold"><%= system.usedMem %> / <%= system.totalMem %> GB</span>
+          </div>
+          <% const memPercent = ((system.usedMem / system.totalMem) * 100).toFixed(0); %>
+          <div class="w-full bg-[#040519] rounded-full h-2 overflow-hidden border border-[#42425B]/40">
+            <div class="bg-gradient-to-r from-[#4A35CF] to-[#7D6BF2] h-2 rounded-full transition-all duration-500" style="width: <%= memPercent %>%"></div>
+          </div>
+          <span class="text-[11px] text-[#8282A4] mt-2 block"><%= memPercent %>% host RAM utilized</span>
+        </div>
+
+        <!-- CPU Cores & Load -->
+        <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span class="text-[#8282A4] font-semibold uppercase tracking-wider">CPU & Load Average</span>
+            <span class="font-mono text-[#F4F4F4] font-semibold"><%= system.cpuCount %> Cores</span>
+          </div>
+          <p class="text-lg font-bold font-mono text-[#D5D5DB] mt-1"><%= system.loadAvg %></p>
+          <span class="text-[11px] text-[#8282A4] mt-2 block">1-minute load average</span>
+        </div>
+
+        <!-- System Uptime & OS -->
+        <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span class="text-[#8282A4] font-semibold uppercase tracking-wider">Platform & Uptime</span>
+            <span class="arix-badge-success text-[10px] uppercase font-bold py-0.5 px-2">Online</span>
+          </div>
+          <p class="text-sm font-bold text-[#F4F4F4] mt-1"><%= system.platform %> (<%= system.release.slice(0, 14) %>)</p>
+          <span class="text-[11px] text-[#8282A4] mt-2 block">Uptime: <%= system.uptime %> hours</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Action Launchpad -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-bolt text-amber-400 mr-2"></i>
+        Quick Administration Shortcuts
+      </h2>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <a href="/admin/servers/new" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-server text-[#7D6BF2] text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">New Server</span>
+        </a>
+        <a href="/admin/users/new" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-user-plus text-emerald-400 text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">New User</span>
+        </a>
+        <a href="/admin/nodes/new" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-network-wired text-cyan-400 text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">New Node</span>
+        </a>
+        <a href="/admin/locations" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-location-dot text-indigo-400 text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">Locations</span>
+        </a>
+        <a href="/admin/nests" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-feather text-amber-400 text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">Nests & Eggs</span>
+        </a>
+        <a href="/admin/settings" class="p-3.5 rounded-[10px] bg-[#0B0D2A] hover:bg-[#2B2B40] border border-[#42425B] text-center group transition-all hover:-translate-y-0.5">
+          <i class="fa-solid fa-sliders text-purple-400 text-lg mb-2 block group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-semibold text-[#D5D5DB] block">Settings</span>
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

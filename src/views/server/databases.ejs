@@ -1,0 +1,197 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Server Databases</h2>
+      <p class="text-xs text-[#8282A4] mt-0.5">Provision isolated MySQL/MariaDB databases for your server plugins or applications.</p>
+    </div>
+    <button onclick="document.getElementById('modal-new-db').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4">
+      <i class="fa-solid fa-plus mr-1"></i> New Database
+    </button>
+  </div>
+
+  <% if (databases.length === 0) { %>
+    <div class="arix-card p-12 text-center border border-[#42425B]">
+      <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+      <h3 class="text-base font-semibold text-[#F4F4F4]">No Databases Created</h3>
+      <p class="text-xs text-[#8282A4] mt-1 max-w-sm mx-auto">Click "New Database" above to provision a database for this server.</p>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <% databases.forEach(db => { %>
+        <div class="arix-card p-5 flex flex-col justify-between border border-[#42425B] relative overflow-hidden">
+          <div class="arix-status-indicator arix-status-online"></div>
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-[#F4F4F4] text-sm font-mono flex items-center">
+                <i class="fa-solid fa-database text-[#7D6BF2] mr-2"></i>
+                <%= db.database_name %>
+              </span>
+              <span class="arix-badge-success text-[10px] uppercase font-bold">Active</span>
+            </div>
+
+            <div class="space-y-2.5 bg-[#0B0D2A] p-3.5 rounded-[7px] border border-[#42425B]/60 text-xs font-mono">
+              <div class="flex items-center justify-between">
+                <span class="text-[#8282A4]">Host:</span>
+                <span class="text-[#D5D5DB] select-all cursor-pointer hover:text-white" onclick="window.copyToClipboard('<%= db.host %>:<%= db.port %>', this)"><%= db.host %>:<%= db.port %></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#8282A4]">Username:</span>
+                <span class="text-[#D5D5DB] select-all cursor-pointer hover:text-white" onclick="window.copyToClipboard('<%= db.db_username %>', this)"><%= db.db_username %></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#8282A4]">Password:</span>
+                <span class="text-[#7D6BF2] select-all cursor-pointer font-semibold hover:text-[#5E46E5]" onclick="window.copyToClipboard('<%= db.db_password %>', this)"><%= db.db_password %></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 mt-3 border-t border-[#42425B]/40 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[11px] text-[#8282A4] font-sans">Created on <%= new Date(db.created_at).toLocaleDateString() %></span>
+            
+            <div class="flex items-center space-x-2">
+              <a href="/server/<%= server.id %>/databases/<%= db.id %>/export" class="arix-btn arix-btn-secondary text-xs py-1 px-2.5" title="Export SQL Dump">
+                <i class="fa-solid fa-file-export mr-1 text-[#7D6BF2]"></i> Export
+              </a>
+              <button onclick="openImportModal(<%= db.id %>, '<%= db.database_name %>')" class="arix-btn arix-btn-secondary text-xs py-1 px-2.5" title="Import SQL File">
+                <i class="fa-solid fa-file-import mr-1 text-emerald-400"></i> Import
+              </button>
+              <form action="/server/<%= server.id %>/databases/delete" method="POST" onsubmit="return confirm('Delete this database?')" class="inline">
+                <input type="hidden" name="id" value="<%= db.id %>">
+                <button type="submit" class="arix-btn arix-btn-danger text-xs py-1 px-2.5">
+                  <i class="fa-solid fa-trash-can mr-1"></i> Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+</main>
+
+<!-- Modal: Import Database SQL (Arix Addon) -->
+<div id="modal-import-db" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-md w-full p-6 shadow-2xl border border-[#42425B] space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-[#42425B]">
+      <h3 class="text-base font-bold text-[#F4F4F4] flex items-center font-header">
+        <i class="fa-solid fa-file-import text-emerald-400 mr-2"></i> Import SQL Database
+      </h3>
+      <button onclick="document.getElementById('modal-import-db').classList.add('hidden')" class="text-[#8282A4] hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="import-db-form" onsubmit="submitDbImport(event)" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" id="import-db-id">
+
+      <p class="text-xs text-[#8282A4]">Import a raw <code class="text-[#D5D5DB]">.sql</code> or <code class="text-[#D5D5DB]">.sql.gz</code> dump into target database <strong id="import-db-target" class="text-white font-mono"></strong>.</p>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Select SQL File</label>
+        <input type="file" id="import-sql-file" name="sql" accept=".sql,.sql.gz" required class="arix-input text-xs w-full file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5]">
+      </div>
+
+      <div class="p-3 rounded-[8px] bg-[#16162C] border border-[#42425B] flex items-start space-x-3">
+        <input type="checkbox" id="import-wipe" name="wipe" value="1" class="mt-0.5 rounded border-[#42425B] text-[#4A35CF] focus:ring-[#4A35CF]">
+        <div>
+          <label for="import-wipe" class="text-xs font-bold text-white cursor-pointer">Wipe existing tables first</label>
+          <p class="text-[10px] text-[#8282A4]">Drops all existing tables in the database before importing new schema & data.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-import-db').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" id="import-submit-btn" class="arix-btn arix-btn-primary text-xs font-semibold">
+          <i class="fa-solid fa-upload mr-1"></i> Start Import
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openImportModal(dbId, dbName) {
+    document.getElementById('import-db-id').value = dbId;
+    document.getElementById('import-db-target').textContent = dbName;
+    document.getElementById('modal-import-db').classList.remove('hidden');
+  }
+
+  async function submitDbImport(e) {
+    e.preventDefault();
+    const dbId = document.getElementById('import-db-id').value;
+    const fileInput = document.getElementById('import-sql-file');
+    const wipe = document.getElementById('import-wipe').checked;
+    const btn = document.getElementById('import-submit-btn');
+
+    if (!fileInput.files[0]) {
+      alert('Please select a .sql file to import.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('sql', fileInput.files[0]);
+    if (wipe) formData.append('wipe', '1');
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Importing SQL...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/databases/${dbId}/import`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Import failed');
+
+      alert('Database imported successfully!');
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-upload mr-1"></i> Start Import`;
+      alert(`Import error: ${err.message}`);
+    }
+  }
+</script>
+
+<!-- Modal: New Database -->
+<div id="modal-new-db" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-database text-[#7D6BF2] mr-2"></i> Create New Database
+    </h3>
+    <form action="/server/<%= server.id %>/databases/new" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Database Name</label>
+        <input type="text" name="database_name" placeholder="e.g. data or plugins" required autofocus class="arix-input">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Database Host</label>
+        <select name="database_host_id" class="arix-select">
+          <% hosts.forEach(h => { %>
+            <option value="<%= h.id %>"><%= h.name %> (<%= h.host %>:<%= h.port %>)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-db').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Create Database</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

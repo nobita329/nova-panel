@@ -1,0 +1,142 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+          <i class="fa-solid fa-boxes-packing text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Modpack Installer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Deploy full Minecraft modpacks and server environments with a single click.</p>
+    </div>
+
+    <!-- Search Form -->
+    <form onsubmit="searchModpacks(event)" class="flex items-center space-x-2 w-full md:w-80">
+      <input type="text" id="modpack-query" placeholder="Search modpacks (e.g. Cobblemon, Create, All the Mods)..." class="arix-input text-xs w-full">
+      <button type="submit" class="arix-btn arix-btn-primary text-xs font-semibold px-3 whitespace-nowrap">
+        <i class="fa-solid fa-search"></i>
+      </button>
+    </form>
+  </div>
+
+  <div id="modpack-loading" class="hidden py-12 text-center">
+    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-purple-400 mb-3"></i>
+    <p class="text-sm text-[#8282A4]">Searching Modrinth modpack catalog...</p>
+  </div>
+
+  <div id="modpack-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% modpacks.forEach(m => { %>
+      <div class="arix-card p-5 flex flex-col justify-between hover:border-purple-500/60 transition-all group">
+        <div>
+          <div class="flex items-start space-x-3 mb-3">
+            <div class="w-12 h-12 rounded-[10px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+              <% if (m.icon) { %>
+                <img src="<%= m.icon %>" alt="<%= m.name %>" class="w-full h-full object-cover">
+              <% } else { %>
+                <i class="fa-solid fa-boxes-packing text-2xl text-purple-400"></i>
+              <% } %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-purple-400 transition-colors"><%= m.name %></h4>
+              <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]"><%= m.author %></span></p>
+            </div>
+          </div>
+          <p class="text-xs text-[#8282A4] line-clamp-3 mb-4 min-h-[48px]"><%= m.tag %></p>
+        </div>
+
+        <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+          <div class="text-[11px] text-[#8282A4]">
+            <i class="fa-solid fa-download mr-1"></i><%= Number(m.downloads || 0).toLocaleString() %>
+          </div>
+          <button onclick="installModpack('<%= m.id %>', '<%= m.name.replace(/'/g, "\\'") %>', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1.5 px-3.5">
+            <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Install Pack
+          </button>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+</div>
+
+<script>
+  async function searchModpacks(e) {
+    e.preventDefault();
+    const query = document.getElementById('modpack-query').value;
+    const loading = document.getElementById('modpack-loading');
+    const grid = document.getElementById('modpack-grid');
+
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/modpacks/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      loading.classList.add('hidden');
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-[#8282A4]"><p class="text-sm">No modpacks found matching "${query}".</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = data.map(m => `
+        <div class="arix-card p-5 flex flex-col justify-between hover:border-purple-500/60 transition-all group">
+          <div>
+            <div class="flex items-start space-x-3 mb-3">
+              <div class="w-12 h-12 rounded-[10px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                ${m.icon ? `<img src="${m.icon}" alt="${m.name}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-boxes-packing text-2xl text-purple-400"></i>`}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-purple-400 transition-colors">${m.name}</h4>
+                <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]">${m.author}</span></p>
+              </div>
+            </div>
+            <p class="text-xs text-[#8282A4] line-clamp-3 mb-4 min-h-[48px]">${m.tag || ''}</p>
+          </div>
+
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+            <div class="text-[11px] text-[#8282A4]">
+              <i class="fa-solid fa-download mr-1"></i>${Number(m.downloads || 0).toLocaleString()}
+            </div>
+            <button onclick="installModpack('${m.id}', '${m.name.replace(/'/g, "\\'")}', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1.5 px-3.5">
+              <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Install Pack
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      loading.classList.add('hidden');
+      grid.innerHTML = `<div class="col-span-full py-6 text-center text-rose-400 text-xs">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function installModpack(resourceId, name, btn) {
+    if (!confirm(`Warning: Installing "${name}" will extract modpack files into your server root. Ensure your server is stopped. Continue?`)) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Downloading & Extracting...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/modpacks/install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resourceId, name })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+      btn.className = 'arix-btn arix-btn-success text-xs font-semibold py-1.5 px-3.5';
+      btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Installed!`;
+      alert(`Modpack "${name}" has been installed successfully.`);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down mr-1"></i> Install Pack`;
+      alert(`Modpack error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

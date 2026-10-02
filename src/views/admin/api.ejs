@@ -1,0 +1,99 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (newKey) { %>
+      <div class="mb-6 p-4 rounded-[10px] bg-[#f59e0b]/10 border border-[#f59e0b]/30 text-amber-300 text-sm shadow-xl">
+        <div class="font-bold flex items-center mb-1 text-[#F4F4F4]">
+          <i class="fa-solid fa-key mr-2 text-amber-400"></i>
+          New Admin API Key Generated! Copy it now:
+        </div>
+        <p class="text-xs text-amber-400/80 mb-2">This token will NOT be visible again once you leave this page.</p>
+        <div class="bg-[#0B0D2A] p-3 rounded-[7px] border border-[#42425B] font-mono text-xs select-all text-[#7D6BF2] break-all cursor-pointer hover:border-[#4A35CF]"
+             onclick="window.copyToClipboard('<%= newKey %>', this)">
+          <%= newKey %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-key text-[#7D6BF2] mr-2.5"></i>
+          Application API Keys
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Generate programmatic tokens to automate panel tasks on port 3003 via the REST API.</p>
+      </div>
+      <button onclick="document.getElementById('modal-new-api').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+        <i class="fa-solid fa-plus mr-1"></i> Create API Key
+      </button>
+    </div>
+
+    <!-- API Keys Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3.5 px-4">Identifier</th>
+            <th class="py-3.5 px-4">Description</th>
+            <th class="py-3.5 px-4">Created By</th>
+            <th class="py-3.5 px-4">Last Used</th>
+            <th class="py-3.5 px-4 text-right">Revoke</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs">
+          <% if (keys.length === 0) { %>
+            <tr>
+              <td colspan="5" class="py-12 text-center text-[#8282A4]">
+                <i class="fa-solid fa-key text-3xl mb-2 text-[#42425B] block"></i>
+                No application API keys configured yet.
+              </td>
+            </tr>
+          <% } else { %>
+            <% keys.forEach(k => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                <td class="py-3.5 px-4 font-mono text-[#7D6BF2] font-bold"><%= k.identifier %></td>
+                <td class="py-3.5 px-4 font-semibold text-[#F4F4F4]"><%= k.description %></td>
+                <td class="py-3.5 px-4 text-[#8282A4]"><%= k.username %></td>
+                <td class="py-3.5 px-4 text-[#8282A4]"><%= k.last_used ? new Date(k.last_used).toLocaleString() : 'Never' %></td>
+                <td class="py-3.5 px-4 text-right">
+                  <form action="/admin/api/delete" method="POST" class="inline" onsubmit="return confirm('Revoke this API key?')">
+                    <input type="hidden" name="id" value="<%= k.id %>">
+                    <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Revoke">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: New API Key -->
+<div id="modal-new-api" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+      <i class="fa-solid fa-key text-[#7D6BF2] mr-2"></i> Create Application Key
+    </h3>
+    <form action="/admin/api/new" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Description</label>
+        <input type="text" name="description" placeholder="e.g. WHMCS Billing / Node Daemon" required autofocus class="arix-input">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-api').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Generate</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

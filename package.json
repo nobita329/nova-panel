@@ -1,0 +1,45 @@
+{
+  "name": "nova-panel",
+  "version": "1.0.0",
+  "description": "Nova Game & App Server Management Panel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "createuser": "node src/scripts/createuser.js",
+    "migration": "node src/scripts/migrate.js",
+    "build": "node src/scripts/build.js",
+    "dev": "node --watch server.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop nova-panel",
+    "pm2:restart": "pm2 restart nova-panel",
+    "pm2:logs": "pm2 logs nova-panel",
+    "pm2:status": "pm2 status",
+    "pm2:delete": "pm2 delete nova-panel"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nobita54/Vps.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nobita54/Vps/issues"
+  },
+  "homepage": "https://github.com/nobita54/Vps#readme",
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "archiver": "^8.0.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.4.0",
+    "node-cron": "^4.6.0",
+    "pm2": "^7.0.4",
+    "ssh2": "^1.17.0",
+    "ws": "^8.22.0"
+  }
+}

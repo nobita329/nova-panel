@@ -1,0 +1,260 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <!-- Addon Title Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+          <i class="fa-solid fa-cubes text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Mod Installer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Search and install Fabric, Forge, and NeoForge mods directly into <code class="text-[#D5D5DB]">/mods</code>.</p>
+    </div>
+
+    <!-- Mode Switcher Tabs -->
+    <div class="flex items-center space-x-2 bg-[#16162C] p-1 rounded-[10px] border border-[#42425B]">
+      <button id="tab-browse-btn" onclick="switchModTab('browse')" class="px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all">
+        <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Browse Mods
+      </button>
+      <button id="tab-installed-btn" onclick="switchModTab('installed')" class="px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all">
+        <i class="fa-solid fa-circle-check mr-1.5"></i> Installed (<span id="installed-count"><%= installed.length %></span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTION 1: BROWSE MODS -->
+  <div id="section-browse" class="space-y-6">
+    <div class="arix-card p-4">
+      <form id="mod-search-form" onsubmit="searchMods(event)" class="flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[#8282A4]"></i>
+          <input type="text" id="mod-query" placeholder="Search mods (e.g. Sodium, Lithium, FerriteCore, JEI, JourneyMap)..." class="arix-input pl-9 text-xs w-full">
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <select id="mod-loader" class="arix-input text-xs w-32">
+            <option value="">Any Loader</option>
+            <option value="fabric">Fabric</option>
+            <option value="forge">Forge</option>
+            <option value="neoforge">NeoForge</option>
+            <option value="quilt">Quilt</option>
+          </select>
+          <button type="submit" class="arix-btn arix-btn-primary text-xs font-semibold px-4 whitespace-nowrap">
+            <i class="fa-solid fa-search mr-1.5"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div id="mod-results-loading" class="hidden py-12 text-center">
+      <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-400 mb-3"></i>
+      <p class="text-sm text-[#8282A4]">Fetching mods from Modrinth...</p>
+    </div>
+
+    <div id="mod-results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% recommended.forEach(m => { %>
+        <div class="arix-card p-4 flex flex-col justify-between hover:border-indigo-500/60 transition-all group">
+          <div>
+            <div class="flex items-start space-x-3 mb-2.5">
+              <div class="w-11 h-11 rounded-[8px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <% if (m.icon) { %>
+                  <img src="<%= m.icon %>" alt="<%= m.name %>" class="w-full h-full object-cover">
+                <% } else { %>
+                  <i class="fa-solid fa-cubes text-lg text-indigo-400"></i>
+                <% } %>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-indigo-400 transition-colors"><%= m.name %></h4>
+                <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]"><%= m.author %></span></p>
+              </div>
+            </div>
+            <p class="text-xs text-[#8282A4] line-clamp-2 mb-3 min-h-[32px]"><%= m.tag %></p>
+          </div>
+
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+            <div class="text-[11px] text-[#8282A4]">
+              <i class="fa-solid fa-download mr-1"></i><%= Number(m.downloads || 0).toLocaleString() %>
+            </div>
+            <button onclick="installMod('<%= m.id %>', '<%= m.name.replace(/'/g, "\\'") %>', '<%= m.icon || '' %>', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1 px-3">
+              <i class="fa-solid fa-download mr-1"></i> Install
+            </button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- SECTION 2: INSTALLED MODS -->
+  <div id="section-installed" class="hidden space-y-4">
+    <div class="arix-card overflow-hidden">
+      <div class="p-4 border-b border-[#42425B] flex items-center justify-between">
+        <h3 class="text-sm font-bold text-[#F4F4F4] font-header">Installed Mods in /mods</h3>
+        <button onclick="window.location.reload()" class="arix-btn arix-btn-secondary text-xs">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Refresh
+        </button>
+      </div>
+
+      <% if (installed.length === 0) { %>
+        <div class="py-12 text-center text-[#8282A4]">
+          <i class="fa-solid fa-cubes text-4xl mb-3 text-[#42425B]"></i>
+          <p class="text-sm">No mods installed yet in <code class="text-[#D5D5DB]">/mods</code>.</p>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-[#D5D5DB]">
+            <thead class="bg-[#16162C] text-[#8282A4] uppercase font-semibold text-[10px] tracking-wider border-b border-[#42425B]">
+              <tr>
+                <th class="p-3.5">Mod Name</th>
+                <th class="p-3.5">File Name</th>
+                <th class="p-3.5">Size</th>
+                <th class="p-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#42425B]">
+              <% installed.forEach(m => { %>
+                <tr class="hover:bg-[#1D1D37]/40 transition-colors">
+                  <td class="p-3.5 font-semibold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-cubes text-indigo-400"></i>
+                    <span><%= m.name %></span>
+                  </td>
+                  <td class="p-3.5 font-mono text-indigo-300"><%= m.file_name %></td>
+                  <td class="p-3.5"><%= m.size %></td>
+                  <td class="p-3.5 text-right">
+                    <button onclick="uninstallMod('<%= m.file_name %>', this)" class="arix-btn arix-btn-danger text-xs font-semibold py-1 px-2.5">
+                      <i class="fa-solid fa-trash mr-1"></i> Delete
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchModTab(tab) {
+    const browseBtn = document.getElementById('tab-browse-btn');
+    const installedBtn = document.getElementById('tab-installed-btn');
+    const browseSec = document.getElementById('section-browse');
+    const installedSec = document.getElementById('section-installed');
+
+    if (tab === 'browse') {
+      browseBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all';
+      installedBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all';
+      browseSec.classList.remove('hidden');
+      installedSec.classList.add('hidden');
+    } else {
+      installedBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all';
+      browseBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all';
+      browseSec.classList.add('hidden');
+      installedSec.classList.remove('hidden');
+    }
+  }
+
+  async function searchMods(e) {
+    e.preventDefault();
+    const query = document.getElementById('mod-query').value;
+    const loader = document.getElementById('mod-loader').value;
+    const loading = document.getElementById('mod-results-loading');
+    const grid = document.getElementById('mod-results-grid');
+
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/mods/search?q=${encodeURIComponent(query)}&loader=${loader}`);
+      const mods = await res.json();
+      loading.classList.add('hidden');
+
+      if (!mods || mods.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-[#8282A4]"><p class="text-sm">No mods found matching "${query}".</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = mods.map(m => `
+        <div class="arix-card p-4 flex flex-col justify-between hover:border-indigo-500/60 transition-all group">
+          <div>
+            <div class="flex items-start space-x-3 mb-2.5">
+              <div class="w-11 h-11 rounded-[8px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                ${m.icon ? `<img src="${m.icon}" alt="${m.name}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-cubes text-lg text-indigo-400"></i>`}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-indigo-400 transition-colors">${m.name}</h4>
+                <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]">${m.author}</span></p>
+              </div>
+            </div>
+            <p class="text-xs text-[#8282A4] line-clamp-2 mb-3 min-h-[32px]">${m.tag || ''}</p>
+          </div>
+
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+            <div class="text-[11px] text-[#8282A4]">
+              <i class="fa-solid fa-download mr-1"></i>${Number(m.downloads || 0).toLocaleString()}
+            </div>
+            <button onclick="installMod('${m.id}', '${m.name.replace(/'/g, "\\'")}', '${m.icon || ''}', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1 px-3">
+              <i class="fa-solid fa-download mr-1"></i> Install
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      loading.classList.add('hidden');
+      grid.innerHTML = `<div class="col-span-full py-6 text-center text-rose-400 text-xs">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function installMod(resourceId, name, iconUrl, btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Installing...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/mods/install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resourceId, name, iconUrl })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+      btn.className = 'arix-btn arix-btn-success text-xs font-semibold py-1 px-3';
+      btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Installed`;
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-download mr-1"></i> Install`;
+      alert(`Install error: ${err.message}`);
+    }
+  }
+
+  async function uninstallMod(fileName, btn) {
+    if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/mods/uninstall`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-trash mr-1"></i> Delete`;
+      alert(`Delete error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

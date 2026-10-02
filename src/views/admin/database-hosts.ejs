@@ -1,0 +1,59 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-database text-[#7D6BF2] mr-2.5"></i>
+          Database Hosts
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Configure MySQL/MariaDB database servers for user application data (Default port: 3005).</p>
+      </div>
+      <a href="/admin/database/new" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+        <i class="fa-solid fa-plus mr-1"></i> New Database Host
+      </a>
+    </div>
+
+    <!-- Database Hosts Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3.5 px-4">Host Name</th>
+            <th class="py-3.5 px-4">Address : Port</th>
+            <th class="py-3.5 px-4">Username</th>
+            <th class="py-3.5 px-4">Node</th>
+            <th class="py-3.5 px-4">Databases</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs font-mono">
+          <% hosts.forEach(h => { %>
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3.5 px-4 font-bold text-[#F4F4F4] font-sans"><%= h.name %></td>
+              <td class="py-3.5 px-4 text-[#7D6BF2]"><%= h.host %>:<%= h.port %></td>
+              <td class="py-3.5 px-4 text-[#D5D5DB]"><%= h.username %></td>
+              <td class="py-3.5 px-4 font-sans text-[#8282A4]"><%= h.node_name || 'Local Node' %></td>
+              <td class="py-3.5 px-4 font-bold text-[#F4F4F4]"><%= h.database_count || 0 %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,106 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Sub-Users & Permissions</h2>
+      <p class="text-xs text-[#8282A4] mt-0.5">Invite co-owners or staff members to manage this server with fine-grained access.</p>
+    </div>
+    <button onclick="document.getElementById('modal-new-subuser').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4">
+      <i class="fa-solid fa-user-plus mr-1"></i> Invite User
+    </button>
+  </div>
+
+  <% if (subusers.length === 0) { %>
+    <div class="arix-card p-12 text-center border border-[#42425B]">
+      <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+      <h3 class="text-base font-semibold text-[#F4F4F4]">No Sub-Users Configured</h3>
+      <p class="text-xs text-[#8282A4] mt-1 max-w-sm mx-auto">You can give other Nova users permission to view the console or edit server files.</p>
+    </div>
+  <% } else { %>
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3 px-4">User</th>
+            <th class="py-3 px-4">Email</th>
+            <th class="py-3 px-4">Permissions</th>
+            <th class="py-3 px-4 text-right">Remove</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs">
+          <% subusers.forEach(su => { %>
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-[#F4F4F4]"><%= su.username %></td>
+              <td class="py-3.5 px-4 text-[#8282A4]"><%= su.email %></td>
+              <td class="py-3.5 px-4">
+                <span class="px-2.5 py-1 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/30 font-mono text-[11px] font-semibold">
+                  <%= su.permissions %>
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <form action="/server/<%= server.id %>/users/delete" method="POST" class="inline" onsubmit="return confirm('Remove access for this user?')">
+                  <input type="hidden" name="id" value="<%= su.id %>">
+                  <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+</main>
+
+<!-- Modal: New Subuser -->
+<div id="modal-new-subuser" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-user-plus text-[#7D6BF2] mr-2"></i> Invite Sub-User
+    </h3>
+    <form action="/server/<%= server.id %>/users/new" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">User Email</label>
+        <input type="email" name="email" placeholder="registered.user@domain.com" required autofocus class="arix-input">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Permissions</label>
+        <div class="space-y-2 text-xs text-[#D5D5DB]">
+          <label class="flex items-center cursor-pointer"><input type="checkbox" name="permissions" value="console" checked class="mr-2 rounded bg-[#040519] border-[#42425B] text-[#4A35CF]"> Console Access & Commands</label>
+          <label class="flex items-center cursor-pointer"><input type="checkbox" name="permissions" value="files" checked class="mr-2 rounded bg-[#040519] border-[#42425B] text-[#4A35CF]"> File Manager Access</label>
+          <label class="flex items-center cursor-pointer"><input type="checkbox" name="permissions" value="power" checked class="mr-2 rounded bg-[#040519] border-[#42425B] text-[#4A35CF]"> Power Actions (Start/Stop)</label>
+          <label class="flex items-center cursor-pointer"><input type="checkbox" name="permissions" value="backups" class="mr-2 rounded bg-[#040519] border-[#42425B] text-[#4A35CF]"> Create & Restore Backups</label>
+        </div>
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-subuser').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Grant Access</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

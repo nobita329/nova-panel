@@ -1,0 +1,105 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Automated Schedules</h2>
+      <p class="text-xs text-[#8282A4] mt-0.5">Configure cron jobs for automated server restarts, command broadcasts, or backups.</p>
+    </div>
+    <button onclick="document.getElementById('modal-new-schedule').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4">
+      <i class="fa-solid fa-plus mr-1"></i> New Schedule
+    </button>
+  </div>
+
+  <% if (schedules.length === 0) { %>
+    <div class="arix-card p-12 text-center border border-[#42425B]">
+      <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+      <h3 class="text-base font-semibold text-[#F4F4F4]">No Schedules Configured</h3>
+      <p class="text-xs text-[#8282A4] mt-1 max-w-sm mx-auto">Create scheduled cron tasks to automate server operations.</p>
+    </div>
+  <% } else { %>
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3 px-4">Name</th>
+            <th class="py-3 px-4">Cron Expression</th>
+            <th class="py-3 px-4">Action</th>
+            <th class="py-3 px-4">Last Run</th>
+            <th class="py-3 px-4 text-right">Delete</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs">
+          <% schedules.forEach(s => { %>
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-[#F4F4F4]"><%= s.name %></td>
+              <td class="py-3.5 px-4 font-mono text-[#7D6BF2] font-semibold"><%= s.cron_expression %></td>
+              <td class="py-3.5 px-4 font-mono text-[#D5D5DB]">
+                <span class="px-2 py-0.5 rounded bg-[#0B0D2A] border border-[#42425B] uppercase text-[10px] text-amber-400 mr-1.5"><%= s.action_type %></span>
+                <%= s.action_payload || '-' %>
+              </td>
+              <td class="py-3.5 px-4 text-[#8282A4]"><%= s.last_run ? new Date(s.last_run).toLocaleString() : 'Never' %></td>
+              <td class="py-3.5 px-4 text-right">
+                <form action="/server/<%= server.id %>/schedules/delete" method="POST" class="inline" onsubmit="return confirm('Delete this schedule?')">
+                  <input type="hidden" name="id" value="<%= s.id %>">
+                  <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+</main>
+
+<!-- Modal: New Schedule -->
+<div id="modal-new-schedule" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-md w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-clock text-[#7D6BF2] mr-2"></i> Create New Schedule
+    </h3>
+    <form action="/server/<%= server.id %>/schedules/new" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Schedule Name</label>
+        <input type="text" name="name" placeholder="e.g. Daily Restart / Broadcast" required class="arix-input">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Cron Expression (5 fields)</label>
+        <input type="text" name="cron_expression" placeholder="0 0 * * * (Every midnight)" required class="arix-input font-mono text-xs">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Action Type</label>
+        <select name="action_type" class="arix-select">
+          <option value="power">Power Action (Restart / Stop / Start)</option>
+          <option value="command">Send Console Command</option>
+          <option value="backup">Create Backup</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Action Payload (Command or Power Action)</label>
+        <input type="text" name="action_payload" placeholder="e.g. restart OR say Server restarting in 60s" class="arix-input font-mono text-xs">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-schedule').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Save Schedule</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

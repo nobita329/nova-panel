@@ -1,0 +1,64 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">New Database Host</h1>
+        <p class="text-sm text-[#8282A4] mt-1">Connect an external or local MySQL/MariaDB database host.</p>
+      </div>
+      <a href="/admin/database" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        &larr; Back to Hosts
+      </a>
+    </div>
+
+    <div class="arix-card p-6 sm:p-8 shadow-xl max-w-2xl border border-[#42425B]">
+      <form action="/admin/database/new" method="POST" class="space-y-4">
+        
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Host Name</label>
+          <input type="text" name="name" placeholder="e.g. Local MariaDB" required autofocus class="arix-input">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Host Address / IP</label>
+            <input type="text" name="host" value="127.0.0.1" required
+              class="arix-input font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Port (Default 3005)</label>
+            <input type="number" name="port" value="3005" required
+              class="arix-input font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Root/Admin Username</label>
+            <input type="text" name="username" value="root" required
+              class="arix-input font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Password</label>
+            <input type="password" name="password" placeholder="Database Password"
+              class="arix-input font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-[#42425B]/40 flex items-center justify-end space-x-3">
+          <a href="/admin/database" class="arix-btn arix-btn-secondary text-xs py-2 px-4">Cancel</a>
+          <button type="submit" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+            Create Host
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

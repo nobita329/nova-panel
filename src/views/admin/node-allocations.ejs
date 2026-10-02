@@ -1,0 +1,113 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">Port Allocations: <%= node.name %></h1>
+        <p class="text-sm text-[#8282A4] mt-1">Manage IP and port bindings for game servers on this node.</p>
+      </div>
+      <a href="/admin/nodes" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        &larr; Back to Nodes
+      </a>
+    </div>
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Add Allocations Form -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <i class="fa-solid fa-plus-circle text-[#7D6BF2] mr-2"></i>
+          Assign New Ports
+        </h2>
+
+        <form action="/admin/nodes/<%= node.id %>/allocations" method="POST" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">IP Address</label>
+            <input type="text" name="ip" value="0.0.0.0" required class="arix-input font-mono text-xs">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Ports (Single, List, or Range)</label>
+            <textarea name="ports" rows="4" placeholder="25565-25575&#10;or 3000, 3010, 5000" required
+              class="arix-textarea font-mono text-xs"></textarea>
+            <p class="text-[11px] text-[#8282A4] mt-1">Supports ranges (e.g. <code>25565-25575</code>) or comma separated ports.</p>
+          </div>
+
+          <button type="submit" class="w-full arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+            Generate Allocations
+          </button>
+        </form>
+      </div>
+
+      <!-- Allocations List -->
+      <div class="lg:col-span-2 arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center justify-between font-header">
+          <span class="flex items-center">
+            <i class="fa-solid fa-network-wired text-[#7D6BF2] mr-2"></i>
+            Existing Allocations
+          </span>
+          <span class="text-xs font-normal text-[#8282A4] font-mono"><%= allocations.length %> total ports</span>
+        </h2>
+
+        <div class="overflow-x-auto max-h-[500px]">
+          <table class="arix-table">
+            <thead class="sticky top-0 bg-[#0B0D2A]">
+              <tr>
+                <th class="py-3 px-3">IP</th>
+                <th class="py-3 px-3">Port</th>
+                <th class="py-3 px-3">Status</th>
+                <th class="py-3 px-3">Assigned Server</th>
+                <th class="py-3 px-3 text-right">Delete</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#42425B]/40 text-xs font-mono">
+              <% allocations.forEach(a => { %>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="py-2.5 px-3 text-[#D5D5DB]"><%= a.ip %></td>
+                  <td class="py-2.5 px-3 text-[#7D6BF2] font-bold"><%= a.port %></td>
+                  <td class="py-2.5 px-3 font-sans">
+                    <% if (a.assigned) { %>
+                      <span class="arix-badge-success text-[10px] uppercase font-bold py-0.5 px-2">Used</span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded-[7px] text-[10px] font-semibold bg-[#0B0D2A] text-[#8282A4] border border-[#42425B]">Free</span>
+                    <% } %>
+                  </td>
+                  <td class="py-2.5 px-3 font-sans text-[#F4F4F4]">
+                    <%= a.server_name || '-' %>
+                  </td>
+                  <td class="py-2.5 px-3 text-right">
+                    <% if (!a.assigned) { %>
+                      <form action="/admin/nodes/<%= node.id %>/allocations/delete" method="POST" class="inline">
+                        <input type="hidden" name="allocation_id" value="<%= a.id %>">
+                        <button type="submit" class="p-1 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors">
+                          <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

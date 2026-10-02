@@ -1,0 +1,129 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+          <span><%= error %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Header & Search -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-users text-[#7D6BF2] mr-2.5"></i>
+          User Management
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">View, search, create, and manage client and administrative accounts.</p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <form action="/admin/users" method="GET" class="relative">
+          <input type="text" name="q" value="<%= search %>" placeholder="Search users..."
+            class="arix-input pl-9 text-xs w-48 sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-[#8282A4]"></i>
+        </form>
+        <a href="/admin/users/new" class="arix-btn arix-btn-primary text-xs py-2 px-3.5 font-semibold whitespace-nowrap">
+          <i class="fa-solid fa-user-plus mr-1"></i> New User
+        </a>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <div class="overflow-x-auto">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3.5 px-4">User</th>
+              <th class="py-3.5 px-4">Email</th>
+              <th class="py-3.5 px-4">Role</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4">Created Date</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40 text-xs">
+            <% users.forEach(u => { %>
+              <tr class="hover:bg-white/[0.02] transition-colors">
+                
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-[#4A35CF]/20 text-[#7D6BF2] flex items-center justify-center font-bold text-xs uppercase border border-[#4A35CF]/40">
+                      <%= (u.first_name ? u.first_name[0] : u.username[0]).toUpperCase() %>
+                    </div>
+                    <div>
+                      <a href="/admin/users/<%= u.id %>" class="font-bold text-[#F4F4F4] hover:text-[#7D6BF2] transition-colors">
+                        <%= u.username %>
+                      </a>
+                      <span class="text-[#8282A4] block text-[11px]"><%= u.first_name %> <%= u.last_name %></span>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="py-3.5 px-4 text-[#D5D5DB] font-mono"><%= u.email %></td>
+
+                <td class="py-3.5 px-4">
+                  <% if (u.is_admin) { %>
+                    <span class="arix-badge-warning text-[10px] uppercase font-bold py-0.5 px-2">
+                      Administrator
+                    </span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 rounded-[7px] text-[10px] uppercase font-semibold bg-[#0B0D2A] text-[#8282A4] border border-[#42425B]">
+                      Client
+                    </span>
+                  <% } %>
+                </td>
+
+                <td class="py-3.5 px-4">
+                  <% if (u.status === 'active') { %>
+                    <span class="arix-badge-success text-[10px] uppercase font-bold py-0.5 px-2">Active</span>
+                  <% } else { %>
+                    <span class="arix-badge-danger text-[10px] uppercase font-bold py-0.5 px-2">Suspended</span>
+                  <% } %>
+                </td>
+
+                <td class="py-3.5 px-4 text-[#8282A4] font-sans"><%= new Date(u.created_at).toLocaleDateString() %></td>
+
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end space-x-2">
+                    <a href="/admin/users/<%= u.id %>" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-[#7D6BF2] transition-colors" title="Edit User">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </a>
+                    <% if (u.id !== user.id) { %>
+                      <form action="/admin/users/<%= u.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete user <%= u.username %>?')">
+                        <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete User">
+                          <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

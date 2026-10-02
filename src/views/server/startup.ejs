@@ -1,0 +1,109 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <form action="/server/<%= server.id %>/startup" method="POST" class="space-y-6">
+
+    <!-- Startup Command & Docker Image Card -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-terminal text-[#7D6BF2] mr-2"></i>
+        Startup Configuration
+      </h2>
+
+      <div class="space-y-4">
+        <!-- Arix Addon: Startup Changer Presets -->
+        <% if (presets && presets.length > 0) { %>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Startup Command Preset</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+              <% presets.forEach((p, idx) => { %>
+                <button type="button" onclick="applyPreset('<%= p.command.replace(/'/g, "\\'") %>', this)" class="p-2.5 rounded-[8px] border text-left text-xs font-semibold transition-all preset-btn <%= idx === 0 ? 'bg-[#4A35CF]/20 border-[#4A35CF] text-white' : 'bg-[#16162C] border-[#42425B] text-[#8282A4] hover:text-white' %>">
+                  <div class="font-bold text-white"><%= p.name %></div>
+                  <div class="text-[10px] text-[#8282A4] truncate mt-0.5"><%= p.command %></div>
+                </button>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Startup Command</label>
+          <input type="text" name="startup_command" id="startup_command" value="<%= server.startup_command %>" required
+            class="arix-input font-mono text-xs">
+          <p class="text-[11px] text-[#8282A4] mt-1.5 font-mono">
+            Available variables: <code class="text-[#7D6BF2] bg-[#0B0D2A] px-1 py-0.5 rounded">{{SERVER_MEMORY}}</code>, <code class="text-[#7D6BF2] bg-[#0B0D2A] px-1 py-0.5 rounded">{{SERVER_PORT}}</code>, <code class="text-[#7D6BF2] bg-[#0B0D2A] px-1 py-0.5 rounded">{{SERVER_JARFILE}}</code>
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Docker Container Image</label>
+          <% if (dockerImages && dockerImages.length > 0) { %>
+            <select name="docker_image" class="arix-select font-mono text-xs">
+              <% dockerImages.forEach(img => { %>
+                <option value="<%= img.image %>" <%= server.docker_image === img.image ? 'selected' : '' %>>
+                  <%= img.name %> (<%= img.image %>)
+                </option>
+              <% }) %>
+            </select>
+          <% } else { %>
+            <input type="text" name="docker_image" value="<%= server.docker_image %>" required
+              class="arix-input font-mono text-xs">
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Environment Variables Card -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-sliders text-[#7D6BF2] mr-2"></i>
+        Service Variables
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% if (Object.keys(environment).length === 0) { %>
+          <div class="col-span-2 text-xs text-[#8282A4] py-3">No custom service variables configured for this egg.</div>
+        <% } else { %>
+          <% for (const [k, v] of Object.entries(environment)) { %>
+            <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#D5D5DB] font-mono mb-1.5"><%= k %></label>
+              <input type="text" name="<%= k %>" value="<%= v %>"
+                class="arix-input font-mono text-xs">
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+
+      <div class="pt-6 flex justify-end">
+        <button type="submit" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+          Save Startup Configuration
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+</main>
+
+<script>
+  function applyPreset(cmd, btn) {
+    document.getElementById('startup_command').value = cmd;
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.className = 'p-2.5 rounded-[8px] border text-left text-xs font-semibold transition-all preset-btn bg-[#16162C] border-[#42425B] text-[#8282A4] hover:text-white';
+    });
+    btn.className = 'p-2.5 rounded-[8px] border text-left text-xs font-semibold transition-all preset-btn bg-[#4A35CF]/20 border-[#4A35CF] text-white';
+  }
+</script>
+
+<%- include('../layouts/footer') %>

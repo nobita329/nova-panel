@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Databases & runtime data
+data/*
+!data/.gitkeep
+*.pem
+Instance/
+logs/
+*.log
+
+# OS & Temp
+.DS_Store
+Thumbs.db
+/tmp/

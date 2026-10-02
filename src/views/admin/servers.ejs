@@ -1,0 +1,121 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+          <span><%= error %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-server text-[#7D6BF2] mr-2.5"></i>
+          Servers Management
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Deploy, monitor, edit, and configure all containerized server instances.</p>
+      </div>
+
+      <a href="/admin/servers/new" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+        <i class="fa-solid fa-plus mr-1"></i> Create New Server
+      </a>
+    </div>
+
+    <!-- Servers Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <div class="overflow-x-auto">
+        <table class="arix-table">
+          <thead>
+            <tr>
+              <th class="py-3.5 px-4">Server Name</th>
+              <th class="py-3.5 px-4">Owner</th>
+              <th class="py-3.5 px-4">Node</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4">Allocated Resources</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#42425B]/40 text-xs font-mono">
+            <% if (servers.length === 0) { %>
+              <tr>
+                <td colspan="6" class="py-14 text-center text-[#8282A4] font-sans">
+                  <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+                  <p class="font-medium text-sm text-[#B2B2C1]">No server instances created yet.</p>
+                  <p class="text-xs text-[#5E5E7F] mt-1">Click "Create New Server" above to deploy your first container.</p>
+                </td>
+              </tr>
+            <% } else { %>
+              <% servers.forEach(s => { %>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  
+                  <td class="py-3.5 px-4 font-sans">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-9 h-9 rounded-[8px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2] text-sm">
+                        <i class="fa-solid fa-cube"></i>
+                      </div>
+                      <div>
+                        <a href="/server/<%= s.id %>/console" class="font-bold text-[#F4F4F4] hover:text-[#7D6BF2] transition-colors">
+                          <%= s.name %>
+                        </a>
+                        <span class="text-[#8282A4] block text-[11px] font-mono"><%= s.egg_name %> (Port: <%= s.primary_port %>)</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="py-3.5 px-4 text-[#D5D5DB] font-sans"><%= s.owner_username || 'Admin' %></td>
+
+                  <td class="py-3.5 px-4 text-[#8282A4] font-sans"><%= s.node_name || 'Local Node' %></td>
+
+                  <td class="py-3.5 px-4">
+                    <span class="text-[10px] uppercase font-bold <%= s.status === 'online' ? 'arix-badge-success' : (s.status === 'starting' ? 'arix-badge-warning' : 'arix-badge-danger') %>">
+                      <i class="fa-solid fa-circle text-[7px] mr-1 <%= s.status === 'online' ? 'text-emerald-400' : (s.status === 'starting' ? 'text-amber-400' : 'text-rose-400') %>"></i>
+                      <%= s.status %>
+                    </span>
+                  </td>
+
+                  <td class="py-3.5 px-4 text-[#8282A4]">
+                    <%= s.memory_limit %>MB RAM &bull; <%= s.cpu_limit %>% CPU &bull; <%= (s.disk_limit / 1024).toFixed(1) %>GB SSD
+                  </td>
+
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end space-x-2 font-sans">
+                      <a href="/server/<%= s.id %>/console" class="arix-btn arix-btn-secondary text-xs py-1 px-2.5" title="Open Console">
+                        <i class="fa-solid fa-terminal mr-1"></i> Console
+                      </a>
+                      <form action="/admin/servers/<%= s.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Permanently delete <%= s.name %>?')">
+                        <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete Server">
+                          <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

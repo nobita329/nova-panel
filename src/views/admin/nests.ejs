@@ -1,0 +1,93 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-feather-pointed text-[#7D6BF2] mr-2.5"></i>
+          Service Nests
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Nests group service categories (Minecraft, Node.js, Python) that contain specific Eggs.</p>
+      </div>
+      <button onclick="document.getElementById('modal-new-nest').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+        <i class="fa-solid fa-plus mr-1"></i> New Nest
+      </button>
+    </div>
+
+    <!-- Nests Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <% nests.forEach(n => { %>
+        <div class="arix-card p-6 shadow-xl flex flex-col justify-between group border border-[#42425B] relative overflow-hidden">
+          <div class="arix-status-indicator arix-status-online"></div>
+          <div>
+            <div class="w-12 h-12 rounded-[10px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 text-[#7D6BF2] flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform">
+              <% if (n.name.includes('Minecraft')) { %>
+                <i class="fa-solid fa-cube"></i>
+              <% } else if (n.name.includes('Node')) { %>
+                <i class="fa-brands fa-node-js"></i>
+              <% } else if (n.name.includes('Python')) { %>
+                <i class="fa-brands fa-python"></i>
+              <% } else { %>
+                <i class="fa-solid fa-feather"></i>
+              <% } %>
+            </div>
+
+            <h3 class="text-lg font-bold text-[#F4F4F4] font-header"><%= n.name %></h3>
+            <p class="text-xs text-[#8282A4] mt-1 line-clamp-2"><%= n.description || 'Service Category' %></p>
+
+            <div class="mt-4 pt-3 border-t border-[#42425B]/40 flex items-center justify-between text-xs text-[#8282A4]">
+              <span>Eggs Configured:</span>
+              <span class="font-bold text-[#F4F4F4] font-mono"><%= n.egg_count || 0 %></span>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-[#42425B]/40 flex items-center justify-between">
+            <span class="text-[11px] text-[#8282A4]">Author: <%= n.author || 'NovaPanel' %></span>
+            <a href="/admin/nests/<%= n.id %>/eggs" class="arix-btn arix-btn-secondary text-xs py-1 px-3">
+              Manage Eggs &rarr;
+            </a>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: New Nest -->
+<div id="modal-new-nest" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+      <i class="fa-solid fa-feather text-[#7D6BF2] mr-2"></i> Create New Nest
+    </h3>
+    <form action="/admin/nests" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Nest Name</label>
+        <input type="text" name="name" placeholder="e.g. Rust / Go Apps" required autofocus class="arix-input">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Description</label>
+        <textarea name="description" rows="3" placeholder="Category description" class="arix-textarea"></textarea>
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-nest').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Create Nest</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

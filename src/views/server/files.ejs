@@ -1,0 +1,291 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- File Manager Toolbar & Breadcrumbs -->
+  <div class="arix-card overflow-hidden mb-6">
+    <div class="p-4 border-b border-[#42425B] flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#0B0D2A]/40">
+      
+      <!-- Breadcrumbs -->
+      <div class="flex items-center space-x-2 text-sm font-mono overflow-x-auto text-[#8282A4]">
+        <a href="/server/<%= server.id %>/files" class="hover:text-[#7D6BF2] transition-colors flex items-center text-[#D5D5DB]">
+          <i class="fa-solid fa-house-laptop text-xs mr-1.5 text-[#7D6BF2]"></i> /home/container
+        </a>
+        <% let accumPath = ''; %>
+        <% pathParts.forEach((part, index) => { %>
+          <% accumPath += '/' + part; %>
+          <span class="text-[#5E5E7F]">/</span>
+          <% if (index === pathParts.length - 1) { %>
+            <span class="text-[#F4F4F4] font-semibold bg-[#4A35CF]/20 px-2 py-0.5 rounded border border-[#4A35CF]/30"><%= part %></span>
+          <% } else { %>
+            <a href="/server/<%= server.id %>/files?path=<%= encodeURIComponent(accumPath) %>" class="hover:text-[#7D6BF2] transition-colors text-[#B2B2C1]"><%= part %></a>
+          <% } %>
+        <% }) %>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2 flex-wrap">
+        <button onclick="document.getElementById('modal-new-file').classList.remove('hidden')" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+          <i class="fa-solid fa-file-circle-plus text-[#7D6BF2]"></i> New File
+        </button>
+        <button onclick="document.getElementById('modal-new-folder').classList.remove('hidden')" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+          <i class="fa-solid fa-folder-plus text-amber-400"></i> New Folder
+        </button>
+        <button onclick="document.getElementById('modal-upload').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-1.5 px-3.5">
+          <i class="fa-solid fa-upload"></i> Upload
+        </button>
+        <form action="/server/<%= server.id %>/files/archive" method="POST" class="inline">
+          <input type="hidden" name="currentPath" value="<%= currentPath %>">
+          <button type="submit" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3" title="Archive / Zip current folder">
+            <i class="fa-solid fa-file-zipper text-purple-400"></i> Zip
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Files Table -->
+    <div class="overflow-x-auto">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3 px-4">Name</th>
+            <th class="py-3 px-4">Size</th>
+            <th class="py-3 px-4">Last Modified</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 font-mono text-xs">
+          
+          <!-- Back directory link if in subfolder -->
+          <% if (currentPath && currentPath !== '/') { %>
+            <% const parentDir = currentPath.split('/').slice(0, -1).join('/') || '/'; %>
+            <tr class="hover:bg-white/[0.02]">
+              <td class="py-3 px-4" colspan="4">
+                <a href="/server/<%= server.id %>/files?path=<%= encodeURIComponent(parentDir) %>" class="text-[#7D6BF2] hover:text-[#5E46E5] font-semibold flex items-center">
+                  <i class="fa-solid fa-folder-arrow-up mr-2 text-base"></i> .. (Parent Directory)
+                </a>
+              </td>
+            </tr>
+          <% } %>
+
+          <% if (items.length === 0) { %>
+            <tr>
+              <td colspan="4" class="py-14 text-center text-[#8282A4] font-sans">
+                <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+                <p class="font-medium text-sm text-[#B2B2C1]">This directory is empty</p>
+                <p class="text-xs text-[#5E5E7F] mt-1">Upload files or create a new file to get started.</p>
+              </td>
+            </tr>
+          <% } else { %>
+            <% items.forEach(item => { %>
+              <% const itemPath = (currentPath ? currentPath + '/' : '') + item.name; %>
+              <tr class="hover:bg-white/[0.02] transition-colors group">
+                
+                <!-- Name with Icon -->
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <% if (item.isDirectory) { %>
+                      <i class="fa-solid fa-folder text-amber-400 text-base"></i>
+                      <a href="/server/<%= server.id %>/files?path=<%= encodeURIComponent(itemPath) %>" class="text-[#F4F4F4] hover:text-[#7D6BF2] font-semibold truncate max-w-sm font-sans transition-colors">
+                        <%= item.name %>
+                      </a>
+                    <% } else { %>
+                      <% if (/\.(jar|zip|tar|gz)$/i.test(item.name)) { %>
+                        <i class="fa-solid fa-file-zipper text-purple-400 text-base"></i>
+                      <% } else if (/\.(json|yml|yaml|properties|conf|cfg)$/i.test(item.name)) { %>
+                        <i class="fa-solid fa-file-code text-cyan-400 text-base"></i>
+                      <% } else if (/\.(js|py|sh)$/i.test(item.name)) { %>
+                        <i class="fa-solid fa-code text-[#7D6BF2] text-base"></i>
+                      <% } else { %>
+                        <i class="fa-solid fa-file text-[#8282A4] text-base"></i>
+                      <% } %>
+
+                      <% if (item.isEditable) { %>
+                        <a href="/server/<%= server.id %>/files/edit?path=<%= encodeURIComponent(itemPath) %>" class="text-[#D5D5DB] hover:text-[#7D6BF2] truncate max-w-sm font-sans transition-colors">
+                          <%= item.name %>
+                        </a>
+                      <% } else { %>
+                        <span class="text-[#B2B2C1] truncate max-w-sm font-sans"><%= item.name %></span>
+                      <% } %>
+                    <% } %>
+                  </div>
+                </td>
+
+                <!-- Size -->
+                <td class="py-3 px-4 text-[#8282A4]">
+                  <% if (item.isDirectory) { %>
+                    <span class="text-[#5E5E7F]">-</span>
+                  <% } else { %>
+                    <%= (item.size / 1024 < 1024) ? (item.size / 1024).toFixed(1) + ' KB' : (item.size / 1024 / 1024).toFixed(1) + ' MB' %>
+                  <% } %>
+                </td>
+
+                <!-- Modified Date -->
+                <td class="py-3 px-4 text-[#8282A4] font-sans text-xs">
+                  <%= new Date(item.modified).toLocaleString() %>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end space-x-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    
+                    <% if (!item.isDirectory) { %>
+                      <% if (item.isEditable) { %>
+                        <a href="/server/<%= server.id %>/files/edit?path=<%= encodeURIComponent(itemPath) %>" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-[#7D6BF2] transition-colors" title="Edit File">
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                      <% } %>
+                      <a href="/server/<%= server.id %>/files/download?path=<%= encodeURIComponent(itemPath) %>" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-emerald-400 transition-colors" title="Download">
+                        <i class="fa-solid fa-download"></i>
+                      </a>
+                      <% if (/\.zip$/i.test(item.name)) { %>
+                        <form action="/server/<%= server.id %>/files/extract" method="POST" class="inline">
+                          <input type="hidden" name="currentPath" value="<%= currentPath %>">
+                          <input type="hidden" name="filename" value="<%= item.name %>">
+                          <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-purple-400 transition-colors" title="Extract Zip">
+                            <i class="fa-solid fa-box-open"></i>
+                          </button>
+                        </form>
+                      <% } %>
+                    <% } %>
+
+                    <!-- Rename Button Trigger -->
+                    <button onclick="openRenameModal('<%= item.name %>')" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-amber-400 transition-colors" title="Rename">
+                      <i class="fa-solid fa-i-cursor"></i>
+                    </button>
+
+                    <!-- Delete Form -->
+                    <form action="/server/<%= server.id %>/files/delete" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete <%= item.name %>?')">
+                      <input type="hidden" name="currentPath" value="<%= currentPath %>">
+                      <input type="hidden" name="name" value="<%= item.name %>">
+                      <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+
+                  </div>
+                </td>
+
+              </tr>
+            <% }) %>
+          <% } %>
+
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- Modal: New File -->
+<div id="modal-new-file" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-file-circle-plus text-[#7D6BF2] mr-2"></i> Create New File
+    </h3>
+    <form action="/server/<%= server.id %>/files/new-file" method="POST" class="space-y-4">
+      <input type="hidden" name="currentPath" value="<%= currentPath %>">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">File Name</label>
+        <input type="text" name="name" placeholder="e.g. config.yml" required autofocus class="arix-input">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-file').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Create File</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: New Folder -->
+<div id="modal-new-folder" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-folder-plus text-amber-400 mr-2"></i> Create New Folder
+    </h3>
+    <form action="/server/<%= server.id %>/files/new-folder" method="POST" class="space-y-4">
+      <input type="hidden" name="currentPath" value="<%= currentPath %>">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Folder Name</label>
+        <input type="text" name="name" placeholder="e.g. plugins or config" required autofocus class="arix-input">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-folder').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Create Folder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Upload -->
+<div id="modal-upload" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-md w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-upload text-[#7D6BF2] mr-2"></i> Upload Files
+    </h3>
+    <form action="/server/<%= server.id %>/files/upload?path=<%= encodeURIComponent(currentPath) %>" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <div class="border-2 border-dashed border-[#42425B] rounded-[10px] p-6 text-center hover:border-[#4A35CF] transition-colors bg-[#040519]/50">
+        <i class="fa-solid fa-cloud-arrow-up text-3xl text-[#7D6BF2] mb-2"></i>
+        <p class="text-sm font-semibold text-[#D5D5DB]">Choose files to upload</p>
+        <p class="text-xs text-[#8282A4] mt-1 font-mono">Target: <%= currentPath || '/home/container' %></p>
+        <input type="file" name="files" multiple required class="mt-4 block w-full text-xs text-[#8282A4] file:mr-4 file:py-2 file:px-4 file:rounded-[7px] file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5] file:cursor-pointer">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-upload').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Start Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Rename -->
+<div id="modal-rename" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-i-cursor text-amber-400 mr-2"></i> Rename Item
+    </h3>
+    <form action="/server/<%= server.id %>/files/rename" method="POST" class="space-y-4">
+      <input type="hidden" name="currentPath" value="<%= currentPath %>">
+      <input type="hidden" id="rename-old-name" name="oldName" value="">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">New Name</label>
+        <input type="text" id="rename-new-name" name="newName" required autofocus class="arix-input">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-rename').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Save Rename</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openRenameModal(name) {
+    document.getElementById('rename-old-name').value = name;
+    document.getElementById('rename-new-name').value = name;
+    document.getElementById('modal-rename').classList.remove('hidden');
+  }
+</script>
+
+<%- include('../layouts/footer') %>

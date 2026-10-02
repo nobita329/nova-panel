@@ -1,0 +1,158 @@
+<!-- Arix Server Header & Navigation Bar -->
+<div class="bg-[#0B0D2A] border-b border-[#42425B] mb-6 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Server Info & Status Badge -->
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-[10px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2] shadow-lg shadow-[#4A35CF]/15">
+          <% if (server.nest_id === 1) { %>
+            <i class="fa-solid fa-cube text-2xl"></i>
+          <% } else if (server.nest_id === 2) { %>
+            <i class="fa-brands fa-node-js text-2xl"></i>
+          <% } else if (server.nest_id === 3) { %>
+            <i class="fa-brands fa-python text-2xl"></i>
+          <% } else { %>
+            <i class="fa-solid fa-server text-2xl"></i>
+          <% } %>
+        </div>
+
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header"><%= server.name %></h1>
+            <span id="server-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase <%= server.status === 'online' ? 'arix-badge-success' : (server.status === 'starting' ? 'arix-badge-warning' : 'arix-badge-danger') %>">
+              <i class="fa-solid fa-circle text-[8px] mr-1 <%= server.status === 'online' ? 'text-emerald-400 animate-pulse' : (server.status === 'starting' ? 'text-amber-400 animate-spin' : 'text-rose-400') %>"></i>
+              <span id="server-status-text"><%= server.status %></span>
+            </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8282A4] mt-1 font-mono">
+            <span class="cursor-pointer hover:text-white" onclick="window.copyToClipboard('<%= server.uuid %>', this)" title="Click to copy UUID">
+              UUID: <code class="text-[#D5D5DB]"><%= server.uuid ? server.uuid.slice(0, 8) : server.id %></code>
+            </span>
+            <span>&bull;</span>
+            <span>Port: <code class="text-[#D5D5DB]"><%= server.primary_port %></code></span>
+            <span>&bull;</span>
+            <span>RAM: <code class="text-[#D5D5DB]"><%= server.memory_limit %> MB</code></span>
+            <span>&bull;</span>
+            <span>CPU: <code class="text-[#D5D5DB]"><%= server.cpu_limit %>%</code></span>
+            <% if (server.expiration_date) { %>
+              <span>&bull;</span>
+              <span class="text-amber-400"><i class="fa-solid fa-hourglass-half mr-1"></i> Expires: <code class="text-amber-300"><%= new Date(server.expiration_date).toLocaleDateString() %></code></span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Power Control Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="sendPowerAction('start')" class="arix-btn arix-btn-success text-xs font-semibold">
+          <i class="fa-solid fa-play mr-1"></i> Start
+        </button>
+        <button onclick="sendPowerAction('restart')" class="arix-btn arix-btn-warning text-xs font-semibold">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Restart
+        </button>
+        <button onclick="sendPowerAction('stop')" class="arix-btn arix-btn-danger text-xs font-semibold">
+          <i class="fa-solid fa-stop mr-1"></i> Stop
+        </button>
+        <button onclick="sendPowerAction('kill')" class="arix-btn arix-btn-secondary text-xs font-semibold hover:border-rose-500/50 hover:text-rose-400" title="Force Kill">
+          <i class="fa-solid fa-skull"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Arix Navigation Tabs -->
+    <div class="flex space-x-1 mt-6 border-b border-[#42425B] overflow-x-auto text-sm font-medium">
+      <a href="/server/<%= server.id %>/console" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'console' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-terminal mr-1.5 text-xs"></i> Console
+      </a>
+      <a href="/server/<%= server.id %>/files" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'files' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-folder-open mr-1.5 text-xs"></i> Files
+      </a>
+      <a href="/server/<%= server.id %>/databases" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'databases' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-database mr-1.5 text-xs"></i> Databases
+      </a>
+
+      <!-- Arix Addon Tabs (Minecraft & Games) -->
+      <% if (server.nest_id === 1) { %>
+        <a href="/server/<%= server.id %>/plugins" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'plugins' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-puzzle-piece mr-1.5 text-xs text-[#7D6BF2]"></i> Plugins
+        </a>
+        <a href="/server/<%= server.id %>/mods" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'mods' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-cubes mr-1.5 text-xs text-indigo-400"></i> Mods
+        </a>
+        <a href="/server/<%= server.id %>/modpacks" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'modpacks' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-boxes-packing mr-1.5 text-xs text-purple-400"></i> Modpacks
+        </a>
+        <a href="/server/<%= server.id %>/worlds" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'worlds' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-earth-americas mr-1.5 text-xs text-emerald-400"></i> Worlds
+        </a>
+        <a href="/server/<%= server.id %>/versions" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'versions' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-code-branch mr-1.5 text-xs text-cyan-400"></i> Versions
+        </a>
+        <a href="/server/<%= server.id %>/properties" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'properties' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-sliders mr-1.5 text-xs text-amber-400"></i> Properties
+        </a>
+        <a href="/server/<%= server.id %>/subdomains" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'subdomains' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+          <i class="fa-solid fa-globe mr-1.5 text-xs text-sky-400"></i> Subdomains
+        </a>
+      <% } %>
+
+      <a href="/server/<%= server.id %>/variables" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'variables' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-code mr-1.5 text-xs text-teal-400"></i> Variables
+      </a>
+      <a href="/server/<%= server.id %>/schedules" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'schedules' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-clock mr-1.5 text-xs"></i> Schedules
+      </a>
+      <a href="/server/<%= server.id %>/backups" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'backups' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-box-archive mr-1.5 text-xs"></i> Backups
+      </a>
+      <a href="/server/<%= server.id %>/network" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'network' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-network-wired mr-1.5 text-xs"></i> Network
+      </a>
+      <a href="/server/<%= server.id %>/startup" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'startup' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-play mr-1.5 text-xs"></i> Startup
+      </a>
+      <a href="/server/<%= server.id %>/users" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'users' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-users mr-1.5 text-xs"></i> Users
+      </a>
+      <a href="/server/<%= server.id %>/settings" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'settings' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-gear mr-1.5 text-xs"></i> Settings
+      </a>
+      <a href="/server/<%= server.id %>/activity" class="px-3.5 py-2.5 border-b-2 whitespace-nowrap transition-colors <%= activeTab === 'activity' ? 'border-[#4A35CF] text-[#7D6BF2] font-semibold' : 'border-transparent text-[#8282A4] hover:text-white' %>">
+        <i class="fa-solid fa-list-check mr-1.5 text-xs"></i> Activity
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  async function sendPowerAction(action) {
+    const badge = document.getElementById('server-status-badge');
+    const text = document.getElementById('server-status-text');
+    if (text) text.innerText = action === 'start' ? 'starting' : (action === 'stop' ? 'stopping' : 'processing');
+    
+    // Play Arix sounds
+    if (action === 'start') {
+      window.playArixSound('online');
+    } else if (action === 'stop' || action === 'kill') {
+      window.playArixSound('offline');
+    }
+
+    try {
+      const res = await fetch('/server/<%= server.id %>/power', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert('Action error: ' + (data.error || 'Failed'));
+      }
+    } catch (e) {
+      console.error('Power action failed:', e);
+    }
+  }
+</script>

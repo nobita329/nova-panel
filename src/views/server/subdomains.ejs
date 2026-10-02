@@ -1,0 +1,163 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-400">
+          <i class="fa-solid fa-globe text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Subdomain Manager</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Connect friendly memorable hostnames and SRV records to your server using Cloudflare DNS.</p>
+    </div>
+
+    <div class="bg-[#16162C] px-3.5 py-2 rounded-[8px] border border-[#42425B] text-xs text-[#8282A4]">
+      Usage: <span class="font-bold text-white"><%= subdomains.length %></span> / <span class="text-[#D5D5DB]"><%= server.subdomain_limit || 3 %></span> Subdomains
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- LEFT: CREATE SUBDOMAIN -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="arix-card p-5">
+        <h3 class="text-sm font-bold text-[#F4F4F4] mb-3 pb-2 border-b border-[#42425B] font-header">Create New Subdomain</h3>
+
+        <% if (subdomains.length >= (server.subdomain_limit || 3)) { %>
+          <div class="p-3.5 rounded-[8px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+            You have reached the maximum allowed subdomains for this server.
+          </div>
+        <% } else { %>
+          <form onsubmit="createSubdomain(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-1.5">Subdomain Prefix</label>
+              <input type="text" id="sub-prefix" required placeholder="e.g. play, hypixel, mc" class="arix-input text-xs w-full font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-1.5">Domain Extension</label>
+              <select id="sub-domain" class="arix-input text-xs w-full">
+                <% if (availableDomains && availableDomains.length > 0) { %>
+                  <% availableDomains.forEach(d => { %>
+                    <option value="<%= d %>">.<%= d %></option>
+                  <% }) %>
+                <% } else { %>
+                  <option value="mcserver.io">.mcserver.io</option>
+                  <option value="playnode.xyz">.playnode.xyz</option>
+                <% } %>
+              </select>
+            </div>
+
+            <div class="p-3 rounded-[8px] bg-[#16162C] border border-[#42425B] text-xs space-y-1">
+              <div class="flex items-center justify-between text-[#8282A4]">
+                <span>Target Port:</span>
+                <span class="font-mono text-emerald-400 font-bold"><%= server.primary_port %></span>
+              </div>
+              <div class="flex items-center justify-between text-[#8282A4]">
+                <span>DNS Record Type:</span>
+                <span class="font-mono text-white">A + SRV (_minecraft._tcp)</span>
+              </div>
+            </div>
+
+            <button type="submit" id="create-sub-btn" class="arix-btn arix-btn-primary text-xs font-semibold w-full py-2">
+              <i class="fa-solid fa-plus mr-1.5"></i> Create Subdomain
+            </button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- RIGHT: ACTIVE SUBDOMAINS LIST -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="arix-card p-5">
+        <h3 class="text-sm font-bold text-[#F4F4F4] mb-4 pb-2 border-b border-[#42425B] font-header">Active Subdomains</h3>
+
+        <% if (subdomains.length === 0) { %>
+          <div class="py-12 text-center text-[#8282A4]">
+            <i class="fa-solid fa-globe text-4xl mb-3 text-[#42425B]"></i>
+            <p class="text-sm">No custom subdomains configured for this server yet.</p>
+          </div>
+        <% } else { %>
+          <div class="space-y-3">
+            <% subdomains.forEach(s => { %>
+              <div class="p-4 rounded-[10px] bg-[#16162C] border border-[#42425B] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center space-x-2">
+                    <span class="font-mono font-bold text-sm text-white"><%= s.subdomain %>.<%= s.domain %></span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Active</span>
+                  </div>
+                  <div class="text-xs text-[#8282A4] font-mono">
+                    Direct IP: <code class="text-[#D5D5DB]"><%= s.subdomain %>.<%= s.domain %>:<%= s.port %></code>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                  <button onclick="navigator.clipboard.writeText('<%= s.subdomain %>.<%= s.domain %>'); alert('Copied address to clipboard!');" class="arix-btn arix-btn-secondary text-xs">
+                    <i class="fa-solid fa-copy mr-1"></i> Copy
+                  </button>
+                  <button onclick="deleteSubdomain(<%= s.id %>, this)" class="arix-btn arix-btn-danger text-xs">
+                    <i class="fa-solid fa-trash mr-1"></i> Delete
+                  </button>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  async function createSubdomain(e) {
+    e.preventDefault();
+    const prefix = document.getElementById('sub-prefix').value.trim();
+    const domain = document.getElementById('sub-domain').value;
+    const btn = document.getElementById('create-sub-btn');
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Provisioning DNS...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/subdomains`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain: prefix, domain })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to create subdomain');
+
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-plus mr-1.5"></i> Create Subdomain`;
+      alert(`Error: ${err.message}`);
+    }
+  }
+
+  async function deleteSubdomain(id, btn) {
+    if (!confirm('Are you sure you want to delete this subdomain? Players will no longer be able to connect using it.')) return;
+
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/subdomains/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to delete');
+
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      alert(`Error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

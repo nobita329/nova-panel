@@ -1,0 +1,127 @@
+<%- include('../layouts/header') %>
+
+<main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">Account Settings</h1>
+      <p class="text-sm text-[#8282A4] mt-1">Manage your personal profile, credentials, and API access.</p>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <a href="/account" class="arix-btn arix-btn-primary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-user-gear"></i> Profile
+      </a>
+      <a href="/account/api" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-key"></i> API Keys
+      </a>
+      <a href="/account/ssh-keys" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-terminal"></i> SSH Keys
+      </a>
+      <a href="/account/activity" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-list-check"></i> Activity
+      </a>
+    </div>
+  </div>
+
+  <% if (success) { %>
+    <div class="mb-6 p-4 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-6 p-4 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Profile Details Form -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-user-pen text-[#7D6BF2] mr-2"></i>
+        Profile Information
+      </h2>
+
+      <form action="/account" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Username</label>
+          <input type="text" value="<%= user.username %>" disabled
+            class="arix-input opacity-60 cursor-not-allowed font-mono">
+          <p class="text-[11px] text-[#8282A4] mt-1">Usernames cannot be changed.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">First Name</label>
+            <input type="text" name="first_name" value="<%= user.first_name || '' %>"
+              class="arix-input">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Last Name</label>
+            <input type="text" name="last_name" value="<%= user.last_name || '' %>"
+              class="arix-input">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Email Address</label>
+          <input type="email" name="email" value="<%= user.email %>" required
+            class="arix-input">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Password Change Form -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-lock text-[#7D6BF2] mr-2"></i>
+        Change Password
+      </h2>
+
+      <form action="/account/password" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Current Password</label>
+          <input type="password" name="current_password" required placeholder="••••••••"
+            class="arix-input">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">New Password</label>
+          <input type="password" name="new_password" required placeholder="••••••••" minlength="6"
+            class="arix-input">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Confirm New Password</label>
+          <input type="password" name="confirm_password" required placeholder="••••••••" minlength="6"
+            class="arix-input">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="arix-btn arix-btn-secondary text-xs py-2 px-5 font-semibold">
+            Update Password
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+</main>
+
+<%- include('../layouts/footer') %>

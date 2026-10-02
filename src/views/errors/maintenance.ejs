@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Maintenance Mode' %></title>
+  <link rel="icon" href="/arix/Arix.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/arix.css">
+</head>
+<body class="bg-[#040519] text-[#B2B2C1] min-h-screen flex items-center justify-center p-4 selection:bg-[#4A35CF] selection:text-white"
+      style="background-image: radial-gradient(rgba(74, 53, 207, 0.15) 1px, transparent 1px); background-size: 24px 24px;">
+  <div class="arix-card p-10 text-center max-w-md w-full border border-[#42425B] shadow-2xl">
+    <img src="/arix/images/server_installing.svg" alt="Maintenance" class="h-40 w-auto mx-auto mb-6">
+    <span class="arix-badge-warning text-xs font-semibold uppercase px-3 py-1 mb-2">System Maintenance</span>
+    <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight mt-2 font-header">Under Maintenance</h1>
+    <p class="text-sm text-[#8282A4] mt-2"><%= message %></p>
+    <div class="mt-8">
+      <a href="/auth/login" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+        Administrator Login &rarr;
+      </a>
+    </div>
+  </div>
+</body>
+</html>

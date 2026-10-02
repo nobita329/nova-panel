@@ -1,0 +1,65 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+          <i class="fa-solid fa-egg text-amber-400 mr-2.5"></i>
+          Eggs for <%= nest.name %>
+        </h1>
+        <p class="text-sm text-[#8282A4] mt-1">Specific server softwares and container presets under this category.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a href="/admin/nests" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+          &larr; Back to Nests
+        </a>
+        <a href="/admin/nests/<%= nest.id %>/eggs/new" class="arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+          <i class="fa-solid fa-plus mr-1"></i> Add Egg
+        </a>
+      </div>
+    </div>
+
+    <!-- Eggs Table -->
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3.5 px-4">Egg Name</th>
+            <th class="py-3.5 px-4">Docker Image</th>
+            <th class="py-3.5 px-4">Default Startup Command</th>
+            <th class="py-3.5 px-4">Active Servers</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs">
+          <% eggs.forEach(e => { %>
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3.5 px-4 font-bold text-[#F4F4F4]">
+                <%= e.name %>
+                <span class="text-[#8282A4] block text-[11px] font-normal"><%= e.description %></span>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-[#7D6BF2] text-xs truncate max-w-xs"><%= e.docker_image %></td>
+              <td class="py-3.5 px-4 font-mono text-[#D5D5DB] text-xs truncate max-w-sm"><%= e.startup_command %></td>
+              <td class="py-3.5 px-4 font-bold text-[#F4F4F4] font-mono"><%= e.server_count || 0 %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../layouts/footer') %>

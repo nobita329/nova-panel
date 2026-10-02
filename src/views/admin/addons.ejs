@@ -1,0 +1,334 @@
+<%- include('../layouts/header') %>
+
+<div class="flex min-h-[calc(100vh-4rem)]">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-[8px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+            <i class="fa-solid fa-puzzle-piece text-base"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">Arix Addons Hub</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/30">v2.0.2</span>
+        </div>
+        <p class="text-xs text-[#8282A4] mt-1">Manage, toggle, and configure all integrated Arix addons across all servers and game templates.</p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button onclick="openEggImportModal()" class="arix-btn arix-btn-primary text-xs font-semibold py-2 px-4 shadow-lg shadow-[#4A35CF]/20">
+          <i class="fa-solid fa-file-arrow-up mr-1.5"></i> Import Egg Template
+        </button>
+      </div>
+    </div>
+
+    <!-- Addons Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <% Object.entries(addons).forEach(([key, addon]) => { %>
+        <div class="arix-card p-5 flex flex-col justify-between hover:border-[#4A35CF]/60 transition-all relative overflow-hidden group">
+          
+          <div class="arix-status-indicator <%= addon.enabled ? 'arix-status-online' : 'arix-status-offline' %>" id="ind-<%= key %>"></div>
+
+          <div>
+            <!-- Card Header -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-[8px] bg-[#1D1D37] border border-[#42425B] flex items-center justify-center text-lg text-[#7D6BF2] group-hover:scale-105 transition-transform">
+                  <i class="<%= addon.icon || 'fa-solid fa-puzzle-piece' %>"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-[#F4F4F4] font-header"><%= addon.name || key %></h3>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold bg-[#1D1D37] border border-[#42425B] text-[#8282A4]"><%= addon.category || 'General' %></span>
+                </div>
+              </div>
+
+              <!-- Toggle Switch -->
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" onchange="toggleAddon('<%= key %>', this.checked)" <%= addon.enabled ? 'checked' : '' %> class="sr-only peer">
+                <div class="w-9 h-5 bg-[#2B2B47] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#4A35CF]"></div>
+              </label>
+            </div>
+
+            <!-- Description -->
+            <p class="text-xs text-[#8282A4] leading-relaxed mb-4 min-h-[36px]"><%= addon.description || 'Configurable Arix panel addon extension.' %></p>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between text-xs">
+            <span class="text-[11px] font-semibold <%= addon.enabled ? 'text-emerald-400' : 'text-[#8282A4]' %>" id="status-text-<%= key %>">
+              <i class="fa-solid fa-circle text-[8px] mr-1"></i><%= addon.enabled ? 'Enabled' : 'Disabled' %>
+            </span>
+            <button onclick="configureAddon('<%= key %>')" class="arix-btn arix-btn-secondary text-[11px] py-1 px-3">
+              <i class="fa-solid fa-gear mr-1"></i> Configure
+            </button>
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: Egg Importer Dialog -->
+<div id="modal-egg-import" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-lg w-full p-6 shadow-2xl border border-[#42425B] space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-[#42425B]">
+      <h3 class="text-base font-bold text-white font-header flex items-center">
+        <i class="fa-solid fa-file-arrow-up text-[#7D6BF2] mr-2"></i> Pterodactyl Egg Importer
+      </h3>
+      <button onclick="document.getElementById('modal-egg-import').classList.add('hidden')" class="text-[#8282A4] hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form onsubmit="submitEggImport(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Target Nest</label>
+        <select id="import-nest-select" required class="arix-select text-xs w-full">
+          <% nests.forEach(n => { %>
+            <option value="<%= n.id %>"><%= n.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Upload Egg JSON File</label>
+        <input type="file" id="import-egg-file" accept=".json" onchange="readEggFile(this)" class="arix-input text-xs w-full file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5]">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Or Paste Raw JSON</label>
+        <textarea id="import-egg-json" rows="6" placeholder='{"name": "Minecraft Paper", "docker_images": {...}, "startup": "..."}' class="arix-textarea font-mono text-xs w-full"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-egg-import').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" id="submit-egg-import-btn" class="arix-btn arix-btn-primary text-xs font-semibold">
+          <i class="fa-solid fa-file-import mr-1"></i> Import Egg
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Generic Addon Configuration Dialog -->
+<div id="modal-addon-config" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-lg w-full p-6 shadow-2xl border border-[#42425B] space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-[#42425B]">
+      <h3 id="config-modal-title" class="text-base font-bold text-white font-header">Configure Addon</h3>
+      <button onclick="document.getElementById('modal-addon-config').classList.add('hidden')" class="text-[#8282A4] hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div id="config-modal-body" class="space-y-4">
+      <!-- Dynamic form fields depending on addon -->
+    </div>
+
+    <div class="flex items-center justify-end space-x-2 pt-3 border-t border-[#42425B]">
+      <button type="button" onclick="document.getElementById('modal-addon-config').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+      <button type="button" onclick="saveAddonSettings()" class="arix-btn arix-btn-primary text-xs font-semibold">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeConfigKey = null;
+  const addonsData = <%- JSON.stringify(addons) %>;
+
+  async function toggleAddon(key, enabled) {
+    try {
+      const res = await fetch('/admin/addons/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, enabled })
+      });
+      if (!res.ok) throw new Error('Toggle request failed');
+
+      const ind = document.getElementById(`ind-${key}`);
+      const txt = document.getElementById(`status-text-${key}`);
+      if (enabled) {
+        ind.className = 'arix-status-indicator arix-status-online';
+        txt.className = 'text-[11px] font-semibold text-emerald-400';
+        txt.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1"></i>Enabled';
+      } else {
+        ind.className = 'arix-status-indicator arix-status-offline';
+        txt.className = 'text-[11px] font-semibold text-[#8282A4]';
+        txt.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1"></i>Disabled';
+      }
+    } catch (e) {
+      alert(`Error toggling addon: ${e.message}`);
+    }
+  }
+
+  function configureAddon(key) {
+    activeConfigKey = key;
+    const addon = addonsData[key] || {};
+    document.getElementById('config-modal-title').textContent = `Configure: ${addon.name || key}`;
+
+    const body = document.getElementById('config-modal-body');
+    
+    if (key === 'subdomainManager') {
+      body.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Cloudflare API Token</label>
+          <input type="password" id="cfg-cf-token" value="${addon.api_token || ''}" placeholder="Bearer Token" class="arix-input text-xs w-full font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Cloudflare Zone ID</label>
+          <input type="text" id="cfg-cf-zone" value="${addon.zone_id || ''}" placeholder="Zone ID" class="arix-input text-xs w-full font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Root Domains (Comma-separated)</label>
+          <input type="text" id="cfg-cf-domains" value="${addon.domains || 'mcserver.io, playnode.xyz'}" class="arix-input text-xs w-full font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Max Subdomains Per Server</label>
+          <input type="number" id="cfg-cf-limit" value="${addon.max_subdomains_per_server || 3}" class="arix-input text-xs w-full">
+        </div>
+      `;
+    } else if (key === 'ratelimit') {
+      body.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Requests Per Minute Window</label>
+          <input type="number" id="cfg-rate-limit" value="${addon.requests_per_minute || 120}" class="arix-input text-xs w-full">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Burst Allowance</label>
+          <input type="number" id="cfg-rate-burst" value="${addon.burst_limit || 200}" class="arix-input text-xs w-full">
+        </div>
+      `;
+    } else if (key === 'autoSuspend') {
+      body.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Check Interval (Minutes)</label>
+          <input type="number" id="cfg-suspend-interval" value="${addon.check_interval_minutes || 60}" class="arix-input text-xs w-full">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Grace Period (Days before suspension)</label>
+          <input type="number" id="cfg-suspend-grace" value="${addon.grace_period_days || 0}" class="arix-input text-xs w-full">
+        </div>
+      `;
+    } else if (key === 'eggChanger') {
+      body.innerHTML = `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Egg Restriction Policy</label>
+          <select id="cfg-egg-policy" class="arix-select text-xs w-full">
+            <option value="nestBased" ${addon.restriction === 'nestBased' ? 'selected' : ''}>Nest-Based (Only switch eggs within same Nest)</option>
+            <option value="none" ${addon.restriction === 'none' ? 'selected' : ''}>None (Switch between any Egg in panel)</option>
+          </select>
+        </div>
+      `;
+    } else {
+      body.innerHTML = `
+        <div class="space-y-3">
+          <p class="text-xs text-[#8282A4]">Standard parameters for this addon are active. You can customize extra JSON config options below.</p>
+          <textarea id="cfg-custom-json" rows="6" class="arix-textarea font-mono text-xs w-full">${JSON.stringify(addon, null, 2)}</textarea>
+        </div>
+      `;
+    }
+
+    document.getElementById('modal-addon-config').classList.remove('hidden');
+  }
+
+  async function saveAddonSettings() {
+    if (!activeConfigKey) return;
+    let configPayload = {};
+
+    if (activeConfigKey === 'subdomainManager') {
+      configPayload = {
+        api_token: document.getElementById('cfg-cf-token').value,
+        zone_id: document.getElementById('cfg-cf-zone').value,
+        domains: document.getElementById('cfg-cf-domains').value,
+        max_subdomains_per_server: Number(document.getElementById('cfg-cf-limit').value)
+      };
+    } else if (activeConfigKey === 'ratelimit') {
+      configPayload = {
+        requests_per_minute: Number(document.getElementById('cfg-rate-limit').value),
+        burst_limit: Number(document.getElementById('cfg-rate-burst').value)
+      };
+    } else if (activeConfigKey === 'autoSuspend') {
+      configPayload = {
+        check_interval_minutes: Number(document.getElementById('cfg-suspend-interval').value),
+        grace_period_days: Number(document.getElementById('cfg-suspend-grace').value)
+      };
+    } else if (activeConfigKey === 'eggChanger') {
+      configPayload = {
+        restriction: document.getElementById('cfg-egg-policy').value
+      };
+    } else {
+      try {
+        configPayload = JSON.parse(document.getElementById('cfg-custom-json').value);
+      } catch (e) {
+        alert('Invalid JSON in configuration.');
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch('/admin/addons/configure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: activeConfigKey, config: configPayload })
+      });
+      if (!res.ok) throw new Error('Save failed');
+
+      alert('Addon configuration saved!');
+      window.location.reload();
+    } catch (e) {
+      alert(`Error saving addon settings: ${e.message}`);
+    }
+  }
+
+  function openEggImportModal() {
+    document.getElementById('modal-egg-import').classList.remove('hidden');
+  }
+
+  function readEggFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('import-egg-json').value = e.target.result;
+    };
+    reader.readAsText(file);
+  }
+
+  async function submitEggImport(e) {
+    e.preventDefault();
+    const nestId = document.getElementById('import-nest-select').value;
+    const rawJson = document.getElementById('import-egg-json').value;
+    const btn = document.getElementById('submit-egg-import-btn');
+
+    if (!rawJson.trim()) {
+      alert('Please select an egg JSON file or paste the JSON text.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Importing...`;
+
+    try {
+      const res = await fetch('/admin/eggs/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nest_id: nestId, egg_json: rawJson })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Import failed');
+
+      alert(`Egg "${data.name}" imported successfully into Nest #${nestId}!`);
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-file-import mr-1"></i> Import Egg`;
+      alert(`Egg Import error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

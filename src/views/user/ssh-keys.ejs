@@ -1,0 +1,110 @@
+<%- include('../layouts/header') %>
+
+<main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">SSH Keys</h1>
+      <p class="text-sm text-[#8282A4] mt-1">Manage public SSH keys associated with your account for SFTP access.</p>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <a href="/account" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-user-gear"></i> Profile
+      </a>
+      <a href="/account/api" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-key"></i> API Keys
+      </a>
+      <a href="/account/ssh-keys" class="arix-btn arix-btn-primary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-terminal"></i> SSH Keys
+      </a>
+      <a href="/account/activity" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        <i class="fa-solid fa-list-check"></i> Activity
+      </a>
+    </div>
+  </div>
+
+  <% if (success) { %>
+    <div class="mb-6 p-4 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-6 p-4 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Add SSH Key -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-plus-circle text-[#7D6BF2] mr-2"></i>
+        Add SSH Key
+      </h2>
+
+      <form action="/account/ssh-keys" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Key Name</label>
+          <input type="text" name="name" placeholder="e.g. My Laptop" required class="arix-input">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Public Key (OpenSSH)</label>
+          <textarea name="public_key" rows="5" placeholder="ssh-rsa AAAA..." required
+            class="arix-textarea font-mono text-xs"></textarea>
+        </div>
+
+        <button type="submit" class="w-full arix-btn arix-btn-primary text-xs py-2 px-4 font-semibold">
+          Save SSH Key
+        </button>
+      </form>
+    </div>
+
+    <!-- Active Keys List -->
+    <div class="lg:col-span-2 arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-key text-[#7D6BF2] mr-2"></i>
+        Configured SSH Keys
+      </h2>
+
+      <% if (keys.length === 0) { %>
+        <div class="text-center py-10 text-[#8282A4] text-sm">
+          <i class="fa-solid fa-terminal text-3xl mb-2 text-[#42425B] block"></i>
+          No SSH keys added yet.
+        </div>
+      <% } else { %>
+        <div class="space-y-3">
+          <% keys.forEach(k => { %>
+            <div class="p-4 bg-[#0B0D2A] rounded-[10px] border border-[#42425B] flex items-center justify-between">
+              <div>
+                <p class="font-semibold text-[#F4F4F4] text-sm"><%= k.name %></p>
+                <p class="font-mono text-[11px] text-[#8282A4] mt-0.5 truncate max-w-md"><%= k.fingerprint || k.public_key.slice(0, 40) + '...' %></p>
+                <p class="text-[11px] text-[#5E5E7F] mt-0.5">Added: <%= new Date(k.created_at).toLocaleDateString() %></p>
+              </div>
+
+              <form action="/account/ssh-keys/delete" method="POST">
+                <input type="hidden" name="id" value="<%= k.id %>">
+                <button type="submit" class="arix-btn arix-btn-danger text-xs py-1.5 px-3" title="Delete Key">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+</main>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,239 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <% if (success) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+          <span><%= success %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight flex items-center font-header">
+        <i class="fa-solid fa-sliders text-[#7D6BF2] mr-2.5"></i>
+        Panel Settings & Custom Branding
+      </h1>
+      <p class="text-sm text-[#8282A4] mt-1">Configure general branding, custom logo, favicon with live preview, and system features.</p>
+    </div>
+
+    <form action="/admin/settings" method="POST" enctype="multipart/form-data" class="space-y-6 max-w-4xl">
+
+      <!-- General & Branding Section -->
+      <div class="arix-card p-6 sm:p-8 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <i class="fa-solid fa-paintbrush text-[#7D6BF2] mr-2"></i>
+          General & Branding
+        </h2>
+
+        <div class="space-y-6">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Panel Name</label>
+              <input type="text" name="panel_name" value="<%= settings.panel_name || 'Nova' %>" required class="arix-input">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Company / Hosting Name</label>
+              <input type="text" name="company_name" value="<%= settings.company_name || 'Nova Hosting' %>" required class="arix-input">
+            </div>
+          </div>
+
+          <!-- Panel Logo with Upload + URL + LIVE PREVIEW -->
+          <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+            <label class="block text-xs font-bold uppercase tracking-wider text-[#F4F4F4] mb-2 flex items-center">
+              <i class="fa-solid fa-image text-[#7D6BF2] mr-1.5"></i>
+              Panel Logo (Upload + URL + Live Preview)
+            </label>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div class="md:col-span-2 space-y-3">
+                <div>
+                  <span class="text-[11px] text-[#8282A4] block mb-1">Option A: Logo Image URL</span>
+                  <input type="text" id="logo-url-input" name="panel_logo_url" value="<%= settings.panel_logo || '' %>" placeholder="https://example.com/logo.png"
+                    class="arix-input font-mono text-xs">
+                </div>
+                <div>
+                  <span class="text-[11px] text-[#8282A4] block mb-1">Option B: Upload Image File</span>
+                  <input type="file" id="logo-file-input" name="logo" accept="image/*"
+                    class="block w-full text-xs text-[#8282A4] file:mr-3 file:py-1.5 file:px-3 file:rounded-[7px] file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5] file:cursor-pointer">
+                </div>
+              </div>
+
+              <!-- Live Logo Preview Box -->
+              <div class="flex flex-col items-center justify-center p-3 rounded-[10px] bg-[#040519] border border-[#42425B] h-28">
+                <span class="text-[10px] text-[#8282A4] uppercase font-semibold mb-1">Live Logo Preview</span>
+                <img id="logo-live-preview" src="<%= settings.panel_logo || '/arix/Arix.png' %>"
+                  alt="Logo Preview" class="max-h-16 max-w-full object-contain">
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel Favicon with Upload + URL + LIVE PREVIEW -->
+          <div class="bg-[#0B0D2A] p-4 rounded-[10px] border border-[#42425B]">
+            <label class="block text-xs font-bold uppercase tracking-wider text-[#F4F4F4] mb-2 flex items-center">
+              <i class="fa-solid fa-icons text-[#7D6BF2] mr-1.5"></i>
+              Panel Favicon (Upload + URL + Live Preview)
+            </label>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div class="md:col-span-2 space-y-3">
+                <div>
+                  <span class="text-[11px] text-[#8282A4] block mb-1">Option A: Favicon Image URL</span>
+                  <input type="text" id="favicon-url-input" name="panel_favicon_url" value="<%= settings.panel_favicon || '' %>" placeholder="https://example.com/favicon.ico"
+                    class="arix-input font-mono text-xs">
+                </div>
+                <div>
+                  <span class="text-[11px] text-[#8282A4] block mb-1">Option B: Upload Favicon File</span>
+                  <input type="file" id="favicon-file-input" name="favicon" accept="image/*"
+                    class="block w-full text-xs text-[#8282A4] file:mr-3 file:py-1.5 file:px-3 file:rounded-[7px] file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5] file:cursor-pointer">
+                </div>
+              </div>
+
+              <!-- Live Favicon Preview Box -->
+              <div class="flex flex-col items-center justify-center p-3 rounded-[10px] bg-[#040519] border border-[#42425B] h-28">
+                <span class="text-[10px] text-[#8282A4] uppercase font-semibold mb-1">Live Favicon Preview</span>
+                <img id="favicon-live-preview" src="<%= settings.panel_favicon || '/arix/Arix.png' %>"
+                  alt="Favicon Preview" class="w-10 h-10 object-contain rounded">
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Application URL</label>
+              <input type="text" name="panel_url" value="<%= settings.panel_url || 'http://localhost:3001' %>"
+                class="arix-input font-mono text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Timezone</label>
+              <input type="text" name="timezone" value="<%= settings.timezone || 'UTC' %>"
+                class="arix-input font-mono text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Language</label>
+              <input type="text" name="default_language" value="<%= settings.default_language || 'en' %>"
+                class="arix-input">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Maintenance Mode Section -->
+      <div class="arix-card p-6 sm:p-8 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <i class="fa-solid fa-wrench text-amber-400 mr-2"></i>
+          Maintenance Controls
+        </h2>
+
+        <div class="space-y-4">
+          <label class="flex items-center space-x-2.5 cursor-pointer">
+            <input type="checkbox" name="maintenance_mode" value="1" <%= settings.maintenance_mode === '1' ? 'checked' : '' %> class="w-4 h-4 rounded bg-[#040519] border-[#42425B] text-amber-500">
+            <span class="text-sm font-semibold text-[#D5D5DB]">Enable Maintenance Mode</span>
+          </label>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Maintenance Notice Message</label>
+            <textarea name="maintenance_message" rows="2" class="arix-textarea"><%= settings.maintenance_message || '' %></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email / SMTP Settings Section -->
+      <div class="arix-card p-6 sm:p-8 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <i class="fa-solid fa-envelope text-[#7D6BF2] mr-2"></i>
+          Mail & SMTP Configuration
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">SMTP Host</label>
+            <input type="text" name="smtp_host" value="<%= settings.smtp_host || '' %>" placeholder="smtp.gmail.com"
+              class="arix-input font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">SMTP Port</label>
+            <input type="number" name="smtp_port" value="<%= settings.smtp_port || '587' %>"
+              class="arix-input font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">SMTP Username</label>
+            <input type="text" name="smtp_username" value="<%= settings.smtp_username || '' %>"
+              class="arix-input font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">SMTP Password</label>
+            <input type="password" name="smtp_password" value="<%= settings.smtp_password || '' %>"
+              class="arix-input font-mono text-xs">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Sender Email Address (From)</label>
+            <input type="email" name="smtp_from" value="<%= settings.smtp_from || 'noreply@novapanel.io' %>"
+              class="arix-input font-mono text-xs">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-2">
+        <button type="submit" class="arix-btn arix-btn-primary text-sm py-2.5 px-6 font-bold">
+          <i class="fa-solid fa-floppy-disk mr-1"></i> Save Settings & Branding
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+</div>
+
+<script>
+  // Live Preview Logic for Logo
+  const logoUrlInput = document.getElementById('logo-url-input');
+  const logoFileInput = document.getElementById('logo-file-input');
+  const logoPreview = document.getElementById('logo-live-preview');
+
+  logoUrlInput.addEventListener('input', () => {
+    if (logoUrlInput.value.trim()) {
+      logoPreview.src = logoUrlInput.value.trim();
+    }
+  });
+
+  logoFileInput.addEventListener('change', () => {
+    if (logoFileInput.files && logoFileInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        logoPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(logoFileInput.files[0]);
+    }
+  });
+
+  // Live Preview Logic for Favicon
+  const faviconUrlInput = document.getElementById('favicon-url-input');
+  const faviconFileInput = document.getElementById('favicon-file-input');
+  const faviconPreview = document.getElementById('favicon-live-preview');
+
+  faviconUrlInput.addEventListener('input', () => {
+    if (faviconUrlInput.value.trim()) {
+      faviconPreview.src = faviconUrlInput.value.trim();
+    }
+  });
+
+  faviconFileInput.addEventListener('change', () => {
+    if (faviconFileInput.files && faviconFileInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        faviconPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(faviconFileInput.files[0]);
+    }
+  });
+</script>
+
+<%- include('../layouts/footer') %>

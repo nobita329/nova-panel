@@ -1,0 +1,301 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="space-y-6">
+
+    <!-- General Settings Form -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+        <i class="fa-solid fa-pen-to-square text-[#7D6BF2] mr-2"></i>
+        General Information
+      </h2>
+
+      <form action="/server/<%= server.id %>/settings/rename" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Server Name</label>
+          <input type="text" name="name" value="<%= server.name %>" required class="arix-input">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Description</label>
+          <textarea name="description" rows="3" class="arix-textarea"><%= server.description || '' %></textarea>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="arix-btn arix-btn-primary text-xs py-2 px-5 font-semibold">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Arix Addon: Server Icon Changer -->
+    <% if (server.nest_id === 1) { %>
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <div class="flex items-center space-x-2 mb-2">
+          <div class="w-7 h-7 rounded-[7px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+            <i class="fa-solid fa-image text-xs"></i>
+          </div>
+          <h2 class="text-base font-bold text-[#F4F4F4] font-header">Server Icon Changer</h2>
+        </div>
+        <p class="text-xs text-[#8282A4] mb-5">Upload any PNG/JPG image to automatically scale and save as a 64x64 pixel <code class="text-[#D5D5DB]">server-icon.png</code>.</p>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 p-4 rounded-[10px] bg-[#16162C] border border-[#42425B]">
+          
+          <!-- Mockup Minecraft Server List Entry -->
+          <div class="w-full md:w-80 p-3 rounded-[8px] bg-[#0A0C14] border border-[#2B2B47] flex items-center space-x-3 shadow-inner">
+            <div class="w-16 h-16 rounded-[4px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+              <canvas id="icon-canvas" width="64" height="64" class="w-16 h-16 pixelated"></canvas>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white truncate font-header"><%= server.name %></span>
+                <span class="text-[10px] text-emerald-400 font-mono"><i class="fa-solid fa-signal mr-1"></i>24ms</span>
+              </div>
+              <p class="text-[11px] text-[#8282A4] truncate font-mono mt-0.5">A Nova Panel Minecraft Server</p>
+              <div class="text-[10px] text-[#5E5E7F] mt-1 font-mono">0 / 20 Players</div>
+            </div>
+          </div>
+
+          <div class="flex-1 space-y-3">
+            <input type="file" id="icon-input" accept="image/*" class="arix-input text-xs w-full file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#4A35CF] file:text-white hover:file:bg-[#5E46E5]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-[#8282A4]">Auto-resizes to 64x64 px standard</span>
+              <button onclick="saveServerIcon(this)" id="save-icon-btn" class="arix-btn arix-btn-primary text-xs font-semibold py-1.5 px-4">
+                <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Save Server Icon
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Arix Addon: Egg Changer -->
+    <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+      <div class="flex items-center space-x-2 mb-2">
+        <div class="w-7 h-7 rounded-[7px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+          <i class="fa-solid fa-egg text-xs"></i>
+        </div>
+        <h2 class="text-base font-bold text-[#F4F4F4] font-header">Egg Changer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mb-5">Switch your server runtime template or game engine without creating a new instance.</p>
+
+      <form onsubmit="switchEgg(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Target Template (Egg)</label>
+          <select id="target-egg-select" class="arix-select text-xs w-full">
+            <% if (allowedEggs && allowedEggs.length > 0) { %>
+              <% allowedEggs.forEach(e => { %>
+                <option value="<%= e.id %>" <%= e.id === server.egg_id ? 'selected' : '' %>>
+                  <%= e.name %> <%= e.id === server.egg_id ? '(Current Software)' : '' %>
+                </option>
+              <% }) %>
+            <% } else { %>
+              <option value="<%= server.egg_id %>"><%= server.egg_name || 'Current Egg' %></option>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-3 rounded-[8px] bg-[#16162C] border border-[#42425B] flex items-start space-x-3">
+            <input type="checkbox" id="egg-update-startup" checked class="mt-0.5 rounded border-[#42425B] text-[#4A35CF] focus:ring-[#4A35CF]">
+            <div>
+              <label for="egg-update-startup" class="text-xs font-bold text-white cursor-pointer">Update Startup Command</label>
+              <p class="text-[10px] text-[#8282A4]">Replace current startup command and Docker image with the egg defaults.</p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-[8px] bg-[#16162C] border border-[#42425B] flex items-start space-x-3">
+            <input type="checkbox" id="egg-reinstall" class="mt-0.5 rounded border-[#42425B] text-[#4A35CF] focus:ring-[#4A35CF]">
+            <div>
+              <label for="egg-reinstall" class="text-xs font-bold text-white cursor-pointer">Reinstall Server Files</label>
+              <p class="text-[10px] text-[#8282A4]">Automatically run full server reinstall script after switching egg.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button type="submit" id="switch-egg-btn" class="arix-btn arix-btn-primary text-xs font-semibold py-2 px-5">
+            <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Switch Egg
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Danger Zone: Reinstall & Delete -->
+    <div class="arix-card border border-rose-500/30 p-6 shadow-xl">
+      <h2 class="text-base font-bold text-rose-400 mb-1 flex items-center font-header">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+        Danger Zone
+      </h2>
+      <p class="text-xs text-[#8282A4] mb-6">Actions here can result in permanent service alteration or data deletion.</p>
+
+      <div class="space-y-4">
+        
+        <!-- Reinstall Server -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-[10px] bg-[#0B0D2A] border border-[#42425B] gap-4">
+          <div>
+            <h3 class="text-sm font-bold text-[#F4F4F4]">Reinstall Server</h3>
+            <p class="text-xs text-[#8282A4] mt-0.5">Re-fetches the server software and re-creates the docker container.</p>
+          </div>
+          <form action="/server/<%= server.id %>/settings/reinstall" method="POST" onsubmit="return confirm('Are you sure you want to reinstall this server?')">
+            <button type="submit" class="arix-btn arix-btn-warning text-xs py-1.5 px-3.5 whitespace-nowrap">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i> Reinstall Server
+            </button>
+          </form>
+        </div>
+
+        <!-- Delete Server (Admin or Owner) -->
+        <% if (user.is_admin || user.id === server.owner_id) { %>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-[10px] bg-[#0B0D2A] border border-rose-500/20 gap-4">
+            <div>
+              <h3 class="text-sm font-bold text-rose-400">Delete Server</h3>
+              <p class="text-xs text-[#8282A4] mt-0.5">Permanently delete this server instance, its container, and release all assigned ports.</p>
+            </div>
+            <form action="/admin/servers/<%= server.id %>/delete" method="POST" onsubmit="return confirm('PERMANENT DELETION: Are you ABSOLUTELY sure you want to delete this server instance?')">
+              <button type="submit" class="arix-btn arix-btn-danger text-xs py-1.5 px-3.5 whitespace-nowrap font-semibold">
+                <i class="fa-solid fa-trash-can mr-1"></i> Delete Server
+              </button>
+            </form>
+          </div>
+        <% } %>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+  // Icon Changer Logic
+  const canvas = document.getElementById('icon-canvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  const iconInput = document.getElementById('icon-input');
+  let iconBlob = null;
+
+  if (ctx) {
+    // Initial placeholder icon
+    ctx.fillStyle = '#1D1D37';
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = '#7D6BF2';
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('MC', 32, 32);
+
+    // Try loading existing server-icon.png if exists
+    const existingImg = new Image();
+    existingImg.src = '/server/<%= server.id %>/server-icon.png?' + Date.now();
+    existingImg.onload = () => {
+      ctx.clearRect(0, 0, 64, 64);
+      ctx.drawImage(existingImg, 0, 0, 64, 64);
+    };
+
+    if (iconInput) {
+      iconInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            ctx.clearRect(0, 0, 64, 64);
+            ctx.drawImage(img, 0, 0, 64, 64);
+            canvas.toBlob((b) => { iconBlob = b; }, 'image/png');
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  async function saveServerIcon(btn) {
+    if (!canvas) return;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving...`;
+
+    canvas.toBlob(async (blob) => {
+      const formData = new FormData();
+      formData.append('icon', blob, 'server-icon.png');
+
+      try {
+        const res = await fetch(`/server/<%= server.id %>/api/icon`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to save icon');
+
+        btn.className = 'arix-btn arix-btn-success text-xs font-semibold py-1.5 px-4';
+        btn.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i> Icon Saved!`;
+        setTimeout(() => {
+          btn.className = 'arix-btn arix-btn-primary text-xs font-semibold py-1.5 px-4';
+          btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Save Server Icon`;
+          btn.disabled = false;
+        }, 1500);
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Save Server Icon`;
+        alert(`Error saving icon: ${err.message}`);
+      }
+    }, 'image/png');
+  }
+
+  // Egg Changer Logic
+  async function switchEgg(e) {
+    e.preventDefault();
+    const eggId = document.getElementById('target-egg-select').value;
+    const updateStartup = document.getElementById('egg-update-startup').checked;
+    const reinstall = document.getElementById('egg-reinstall').checked;
+    const btn = document.getElementById('switch-egg-btn');
+
+    if (!confirm('Are you sure you want to switch server egg / software?')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Switching Software...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/egg-changer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ egg_id: eggId, update_startup: updateStartup, reinstall })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Switch failed');
+
+      alert('Egg switched successfully! Server is reloading.');
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1.5"></i> Switch Egg`;
+      alert(`Egg Changer error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

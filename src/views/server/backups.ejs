@@ -1,0 +1,109 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+
+  <% if (success) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-success w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-circle-check mr-2 text-base"></i>
+        <span><%= success %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+      <div class="flex items-center">
+        <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+        <span><%= error %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[#F4F4F4] tracking-tight font-header">Server Backups</h2>
+      <p class="text-xs text-[#8282A4] mt-0.5">Create snapshots of your server files to protect against corruption or data loss.</p>
+    </div>
+    <button onclick="document.getElementById('modal-new-backup').classList.remove('hidden')" class="arix-btn arix-btn-primary text-xs py-2 px-4">
+      <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Create Backup
+    </button>
+  </div>
+
+  <% if (backups.length === 0) { %>
+    <div class="arix-card p-12 text-center border border-[#42425B]">
+      <img src="/arix/images/server_installing.svg" alt="Empty" class="h-20 w-auto mx-auto mb-3 opacity-60">
+      <h3 class="text-base font-semibold text-[#F4F4F4]">No Backups Yet</h3>
+      <p class="text-xs text-[#8282A4] mt-1 max-w-sm mx-auto">Create a backup snapshot to keep your server configuration and worlds safe.</p>
+    </div>
+  <% } else { %>
+    <div class="arix-card overflow-hidden shadow-xl border border-[#42425B]">
+      <table class="arix-table">
+        <thead>
+          <tr>
+            <th class="py-3 px-4">Backup Name</th>
+            <th class="py-3 px-4">Filename</th>
+            <th class="py-3 px-4">Size</th>
+            <th class="py-3 px-4">Date</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#42425B]/40 text-xs">
+          <% backups.forEach(b => { %>
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-[#F4F4F4] flex items-center">
+                <i class="fa-solid fa-file-zipper text-purple-400 mr-2.5 text-base"></i>
+                <%= b.name %>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-[#8282A4]"><%= b.filename %></td>
+              <td class="py-3.5 px-4 font-mono text-[#D5D5DB]">
+                <%= (b.size / 1024 / 1024).toFixed(2) %> MB
+              </td>
+              <td class="py-3.5 px-4 text-[#8282A4] font-sans"><%= new Date(b.created_at).toLocaleString() %></td>
+              <td class="py-3.5 px-4 text-right">
+                <div class="flex items-center justify-end space-x-2">
+                  <a href="/server/<%= server.id %>/backups/<%= b.id %>/download" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-emerald-400 transition-colors" title="Download">
+                    <i class="fa-solid fa-download"></i>
+                  </a>
+                  <form action="/server/<%= server.id %>/backups/<%= b.id %>/restore" method="POST" class="inline" onsubmit="return confirm('Restore this backup? Current server files will be overwritten.')">
+                    <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-amber-400 transition-colors" title="Restore Snapshot">
+                      <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                  </form>
+                  <form action="/server/<%= server.id %>/backups/<%= b.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Permanently delete this backup?')">
+                    <button type="submit" class="p-1.5 rounded hover:bg-[#2B2B40] text-[#8282A4] hover:text-rose-400 transition-colors" title="Delete">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+</main>
+
+<!-- Modal: New Backup -->
+<div id="modal-new-backup" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="arix-card max-w-sm w-full p-6 shadow-2xl border border-[#42425B]">
+    <h3 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center">
+      <i class="fa-solid fa-cloud-arrow-up text-[#7D6BF2] mr-2"></i> Create Backup Snapshot
+    </h3>
+    <form action="/server/<%= server.id %>/backups/new" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Backup Name</label>
+        <input type="text" name="name" placeholder="e.g. Pre-Update Backup" required autofocus class="arix-input">
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" onclick="document.getElementById('modal-new-backup').classList.add('hidden')" class="arix-btn arix-btn-secondary text-xs">Cancel</button>
+        <button type="submit" class="arix-btn arix-btn-primary text-xs">Start Backup</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>

@@ -1,0 +1,222 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+          <i class="fa-solid fa-code-branch text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Version Changer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Switch Minecraft server core software and versions seamlessly powered by mcjars.app.</p>
+    </div>
+
+    <!-- Current Version Badge -->
+    <div class="bg-[#16162C] px-4 py-2 rounded-[10px] border border-[#42425B] flex items-center space-x-3">
+      <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+      <div class="text-xs">
+        <span class="text-[#8282A4] uppercase font-bold text-[10px]">Current Runtime:</span>
+        <div class="font-bold text-white font-mono"><%= server.mc_version || (server.egg_name || 'Paper') + ' (latest)' %></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- LEFT: CHOOSE SERVER ENGINE -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="arix-card p-5">
+        <h3 class="text-sm font-bold text-[#F4F4F4] mb-3 font-header">1. Select Server Engine</h3>
+        
+        <div class="space-y-2" id="engine-selector">
+          <% const engines = [
+            { id: 'paper', name: 'Paper', desc: 'Fastest Spigot fork, top performance & plugin compatibility.', icon: 'fa-cube', color: 'text-rose-400' },
+            { id: 'purpur', name: 'Purpur', desc: 'Paper fork with customizable gameplay & mob options.', icon: 'fa-feather', color: 'text-purple-400' },
+            { id: 'vanilla', name: 'Vanilla', desc: 'Official Mojang server core with pure mechanics.', icon: 'fa-box', color: 'text-emerald-400' },
+            { id: 'fabric', name: 'Fabric', desc: 'Lightweight, modern modding toolchain for servers.', icon: 'fa-network-wired', color: 'text-blue-400' },
+            { id: 'forge', name: 'Forge', desc: 'Classic Minecraft modding ecosystem.', icon: 'fa-hammer', color: 'text-amber-400' },
+            { id: 'neoforge', name: 'NeoForge', desc: 'Next-generation community-driven Forge fork.', icon: 'fa-bolt', color: 'text-orange-400' },
+            { id: 'velocity', name: 'Velocity', desc: 'Next-gen Minecraft proxy with superior exploit defense.', icon: 'fa-arrows-split-up-and-left', color: 'text-cyan-400' },
+            { id: 'bungeecord', name: 'BungeeCord', desc: 'Original multi-server proxy network software.', icon: 'fa-link', color: 'text-indigo-400' }
+          ]; %>
+
+          <% engines.forEach((eng, idx) => { %>
+            <button onclick="selectEngine('<%= eng.id %>', this)" class="w-full text-left p-3 rounded-[8px] border transition-all flex items-center space-x-3 <%= idx === 0 ? 'bg-[#4A35CF]/20 border-[#4A35CF] text-white' : 'bg-[#16162C] border-[#42425B] text-[#8282A4] hover:text-white hover:border-[#42425B]/80' %> engine-btn" data-engine="<%= eng.id %>">
+              <i class="fa-solid <%= eng.icon %> text-lg <%= eng.color %>"></i>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold text-white font-header"><%= eng.name %></div>
+                <div class="text-[10px] text-[#8282A4] truncate"><%= eng.desc %></div>
+              </div>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CHOOSE VERSION & INSTALL -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="arix-card p-6">
+        <h3 class="text-sm font-bold text-[#F4F4F4] mb-4 pb-3 border-b border-[#42425B] font-header">2. Select Minecraft Version & Runtime</h3>
+
+        <form id="version-form" onsubmit="submitVersionChange(event)" class="space-y-5">
+          <input type="hidden" id="selected-engine" value="paper">
+
+          <div>
+            <label class="block text-xs font-semibold text-[#8282A4] uppercase tracking-wider mb-2">Available Releases</label>
+            <div id="versions-loading" class="py-6 text-center text-[#8282A4]">
+              <i class="fa-solid fa-circle-notch fa-spin text-xl text-cyan-400 mb-2"></i>
+              <p class="text-xs">Fetching version builds from mcjars...</p>
+            </div>
+            <select id="version-select" class="arix-input text-xs w-full font-mono hidden">
+              <!-- Populated via API -->
+            </select>
+          </div>
+
+          <div class="p-4 rounded-[8px] bg-[#16162C] border border-[#42425B] space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[#8282A4]">Target Jar File:</span>
+              <span class="font-mono text-emerald-400 font-bold">server.jar</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8282A4]">Java Environment:</span>
+              <span class="font-mono text-cyan-400" id="java-recommendation">Auto (Java 21 / 25)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8282A4]">Backup Previous Jar:</span>
+              <span class="text-white">Automatically created as <code class="text-[#D5D5DB]">server.jar.old</code></span>
+            </div>
+          </div>
+
+          <!-- Warning Alert -->
+          <div class="p-3.5 rounded-[8px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start space-x-2.5">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-sm"></i>
+            <div>
+              <p class="font-semibold">Important Notice</p>
+              <p class="text-[11px] text-amber-200/80 mt-0.5">Please ensure your server is stopped before changing versions. Downgrading Minecraft versions may cause world chunk corruption; taking a backup beforehand is highly recommended.</p>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button type="submit" id="install-version-btn" class="arix-btn arix-btn-primary text-xs font-semibold px-5 py-2">
+              <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> Change Server Version
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  let currentEngine = 'paper';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadVersions('paper');
+  });
+
+  function selectEngine(engineId, btn) {
+    currentEngine = engineId;
+    document.getElementById('selected-engine').value = engineId;
+
+    document.querySelectorAll('.engine-btn').forEach(b => {
+      b.className = 'w-full text-left p-3 rounded-[8px] border transition-all flex items-center space-x-3 bg-[#16162C] border-[#42425B] text-[#8282A4] hover:text-white hover:border-[#42425B]/80 engine-btn';
+    });
+    btn.className = 'w-full text-left p-3 rounded-[8px] border transition-all flex items-center space-x-3 bg-[#4A35CF]/20 border-[#4A35CF] text-white engine-btn';
+
+    loadVersions(engineId);
+  }
+
+  async function loadVersions(engine) {
+    const loading = document.getElementById('versions-loading');
+    const select = document.getElementById('version-select');
+    loading.classList.remove('hidden');
+    select.classList.add('hidden');
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/versions/types/${engine}`);
+      const data = await res.json();
+      loading.classList.add('hidden');
+      select.classList.remove('hidden');
+
+      if (!data || !data.versions || data.versions.length === 0) {
+        select.innerHTML = '<option value="latest">latest - Default Build</option>';
+        return;
+      }
+
+      select.innerHTML = data.versions.map((v, i) => `
+        <option value="${v.version || v}" ${i === 0 ? 'selected' : ''}>
+          ${v.version || v} ${i === 0 ? '(Latest Stable)' : ''}
+        </option>
+      `).join('');
+
+      updateJavaRecommendation(select.value);
+      select.onchange = () => updateJavaRecommendation(select.value);
+    } catch (e) {
+      loading.classList.add('hidden');
+      select.classList.remove('hidden');
+      select.innerHTML = `
+        <option value="1.21.4" selected>1.21.4 (Latest)</option>
+        <option value="1.21.1">1.21.1</option>
+        <option value="1.20.4">1.20.4</option>
+        <option value="1.20.2">1.20.2</option>
+        <option value="1.19.4">1.19.4</option>
+        <option value="1.18.2">1.18.2</option>
+        <option value="1.16.5">1.16.5</option>
+        <option value="1.12.2">1.12.2</option>
+        <option value="1.8.8">1.8.8</option>
+      `;
+      updateJavaRecommendation('1.21.4');
+    }
+  }
+
+  function updateJavaRecommendation(version) {
+    const javaElem = document.getElementById('java-recommendation');
+    if (version.startsWith('1.21') || version.startsWith('1.20.5') || version.startsWith('26.')) {
+      javaElem.textContent = 'Java 21 / Java 25 (Required)';
+    } else if (version.startsWith('1.18') || version.startsWith('1.19') || version.startsWith('1.20')) {
+      javaElem.textContent = 'Java 17 (Required)';
+    } else if (version.startsWith('1.17')) {
+      javaElem.textContent = 'Java 16 (Required)';
+    } else {
+      javaElem.textContent = 'Java 8 / Java 11';
+    }
+  }
+
+  async function submitVersionChange(e) {
+    e.preventDefault();
+    const engine = document.getElementById('selected-engine').value;
+    const version = document.getElementById('version-select').value;
+    const btn = document.getElementById('install-version-btn');
+
+    if (!confirm(`Switch server to ${engine.toUpperCase()} ${version}? This will overwrite server.jar.`)) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Downloading ${engine.toUpperCase()} ${version}...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/versions/change`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: engine, version })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to change version');
+
+      btn.className = 'arix-btn arix-btn-success text-xs font-semibold px-5 py-2';
+      btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Version Changed!`;
+      alert(`Server version successfully updated to ${engine.toUpperCase()} ${version}! Please restart your server.`);
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> Change Server Version`;
+      alert(`Version change error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

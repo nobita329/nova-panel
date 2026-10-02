@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Production Dependencies
+        run: npm ci --omit=dev
+
+      - name: Package Release
+        run: |
+          TAG="${{ github.ref_name || inputs.tag_name }}"
+          zip -r "nova-panel-${TAG}.zip" . -x ".git/*" ".github/*" "node_modules/*" ".env" "data/*.sqlite" "logs/*" "Instance/*"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Nova Panel ${{ github.ref_name || inputs.tag_name }}"
+          tag_name: "${{ github.ref_name || inputs.tag_name }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: nova-panel-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

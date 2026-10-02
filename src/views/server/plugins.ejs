@@ -1,0 +1,283 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <!-- Addon Title Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-[#4A35CF]/20 border border-[#4A35CF]/40 flex items-center justify-center text-[#7D6BF2]">
+          <i class="fa-solid fa-puzzle-piece text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">Plugin Installer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Discover, download, and manage Minecraft plugins from SpigotMC and Modrinth directly into <code class="text-[#D5D5DB]">/plugins</code>.</p>
+    </div>
+
+    <!-- Mode Switcher Tabs -->
+    <div class="flex items-center space-x-2 bg-[#16162C] p-1 rounded-[10px] border border-[#42425B]">
+      <button id="tab-browse-btn" onclick="switchPluginTab('browse')" class="px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all">
+        <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Browse Catalog
+      </button>
+      <button id="tab-installed-btn" onclick="switchPluginTab('installed')" class="px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all">
+        <i class="fa-solid fa-circle-check mr-1.5"></i> Installed (<span id="installed-count"><%= installed.length %></span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTION 1: BROWSE CATALOG -->
+  <div id="section-browse" class="space-y-6">
+    
+    <!-- Search Bar & Filters -->
+    <div class="arix-card p-4">
+      <form id="plugin-search-form" onsubmit="searchPlugins(event)" class="flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[#8282A4]"></i>
+          <input type="text" id="plugin-query" placeholder="Search 100,000+ plugins (e.g. EssentialsX, LuckPerms, Vault, WorldEdit)..." class="arix-input pl-9 text-xs w-full">
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <select id="plugin-service" class="arix-input text-xs w-36">
+            <option value="spiget">SpigotMC (Spiget)</option>
+            <option value="modrinth">Modrinth</option>
+          </select>
+          <button type="submit" class="arix-btn arix-btn-primary text-xs font-semibold px-4 whitespace-nowrap">
+            <i class="fa-solid fa-search mr-1.5"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Catalog Results Grid -->
+    <div id="plugin-results-loading" class="hidden py-12 text-center">
+      <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#7D6BF2] mb-3"></i>
+      <p class="text-sm text-[#8282A4]">Searching plugin repository...</p>
+    </div>
+
+    <div id="plugin-results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Populated via AJAX / Default Recommended Plugins -->
+      <% recommended.forEach(p => { %>
+        <div class="arix-card p-4 flex flex-col justify-between hover:border-[#4A35CF]/60 transition-all group">
+          <div>
+            <div class="flex items-start space-x-3 mb-2.5">
+              <div class="w-11 h-11 rounded-[8px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <% if (p.icon) { %>
+                  <img src="<%= p.icon %>" alt="<%= p.name %>" class="w-full h-full object-cover">
+                <% } else { %>
+                  <i class="fa-solid fa-puzzle-piece text-lg text-[#7D6BF2]"></i>
+                <% } %>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-[#7D6BF2] transition-colors"><%= p.name %></h4>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold bg-[#4A35CF]/20 text-[#7D6BF2]"><%= p.service %></span>
+                </div>
+                <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]"><%= p.author %></span></p>
+              </div>
+            </div>
+            <p class="text-xs text-[#8282A4] line-clamp-2 mb-3 min-h-[32px]"><%= p.tag %></p>
+          </div>
+
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+            <div class="flex items-center space-x-3 text-[11px] text-[#8282A4]">
+              <span><i class="fa-solid fa-download mr-1"></i><%= Number(p.downloads).toLocaleString() %></span>
+              <span><i class="fa-solid fa-star text-amber-400 mr-1"></i><%= p.rating || 5 %></span>
+            </div>
+            <button onclick="installPlugin('<%= p.service %>', '<%= p.id %>', '<%= p.name %>', '<%= p.icon || '' %>', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1 px-3">
+              <i class="fa-solid fa-download mr-1"></i> Install
+            </button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </div>
+
+  <!-- SECTION 2: INSTALLED PLUGINS -->
+  <div id="section-installed" class="hidden space-y-4">
+    <div class="arix-card overflow-hidden">
+      <div class="p-4 border-b border-[#42425B] flex items-center justify-between">
+        <h3 class="text-sm font-bold text-[#F4F4F4] font-header">Installed Plugins in /plugins</h3>
+        <button onclick="window.location.reload()" class="arix-btn arix-btn-secondary text-xs">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Refresh
+        </button>
+      </div>
+
+      <% if (installed.length === 0) { %>
+        <div class="py-12 text-center text-[#8282A4]">
+          <i class="fa-solid fa-box-open text-4xl mb-3 text-[#42425B]"></i>
+          <p class="text-sm">No plugins currently installed in <code class="text-[#D5D5DB]">/plugins</code>.</p>
+          <button onclick="switchPluginTab('browse')" class="arix-btn arix-btn-primary text-xs font-semibold mt-3">
+            Browse Catalog
+          </button>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-[#D5D5DB]">
+            <thead class="bg-[#16162C] text-[#8282A4] uppercase font-semibold text-[10px] tracking-wider border-b border-[#42425B]">
+              <tr>
+                <th class="p-3.5">Plugin Name</th>
+                <th class="p-3.5">Source</th>
+                <th class="p-3.5">File Name</th>
+                <th class="p-3.5">Size</th>
+                <th class="p-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#42425B]">
+              <% installed.forEach(p => { %>
+                <tr class="hover:bg-[#1D1D37]/40 transition-colors">
+                  <td class="p-3.5 font-semibold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-puzzle-piece text-[#7D6BF2]"></i>
+                    <span><%= p.name %></span>
+                  </td>
+                  <td class="p-3.5">
+                    <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#1D1D37] border border-[#42425B] text-[#8282A4]"><%= p.service %></span>
+                  </td>
+                  <td class="p-3.5 font-mono text-emerald-400"><%= p.file_name %></td>
+                  <td class="p-3.5"><%= p.size %></td>
+                  <td class="p-3.5 text-right">
+                    <button onclick="uninstallPlugin('<%= p.file_name %>', this)" class="arix-btn arix-btn-danger text-xs font-semibold py-1 px-2.5">
+                      <i class="fa-solid fa-trash mr-1"></i> Delete
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchPluginTab(tab) {
+    const browseBtn = document.getElementById('tab-browse-btn');
+    const installedBtn = document.getElementById('tab-installed-btn');
+    const browseSec = document.getElementById('section-browse');
+    const installedSec = document.getElementById('section-installed');
+
+    if (tab === 'browse') {
+      browseBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all';
+      installedBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all';
+      browseSec.classList.remove('hidden');
+      installedSec.classList.add('hidden');
+    } else {
+      installedBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold bg-[#4A35CF] text-white shadow-sm transition-all';
+      browseBtn.className = 'px-4 py-1.5 rounded-[8px] text-xs font-semibold text-[#8282A4] hover:text-white transition-all';
+      browseSec.classList.add('hidden');
+      installedSec.classList.remove('hidden');
+    }
+  }
+
+  async function searchPlugins(e) {
+    e.preventDefault();
+    const query = document.getElementById('plugin-query').value;
+    const service = document.getElementById('plugin-service').value;
+    const loading = document.getElementById('plugin-results-loading');
+    const grid = document.getElementById('plugin-results-grid');
+
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/plugins/search?q=${encodeURIComponent(query)}&service=${service}`);
+      const plugins = await res.json();
+      loading.classList.add('hidden');
+
+      if (!plugins || plugins.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-[#8282A4]">
+            <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-amber-400"></i>
+            <p class="text-sm">No plugins found matching "${query}". Try another search keyword.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = plugins.map(p => `
+        <div class="arix-card p-4 flex flex-col justify-between hover:border-[#4A35CF]/60 transition-all group">
+          <div>
+            <div class="flex items-start space-x-3 mb-2.5">
+              <div class="w-11 h-11 rounded-[8px] bg-[#1D1D37] border border-[#42425B] flex-shrink-0 flex items-center justify-center overflow-hidden">
+                ${p.icon ? `<img src="${p.icon}" alt="${p.name}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-puzzle-piece text-lg text-[#7D6BF2]"></i>`}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-sm font-bold text-[#F4F4F4] truncate font-header group-hover:text-[#7D6BF2] transition-colors">${p.name}</h4>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold bg-[#4A35CF]/20 text-[#7D6BF2]">${p.service}</span>
+                </div>
+                <p class="text-xs text-[#8282A4] truncate">by <span class="text-[#D5D5DB]">${p.author}</span></p>
+              </div>
+            </div>
+            <p class="text-xs text-[#8282A4] line-clamp-2 mb-3 min-h-[32px]">${p.tag || ''}</p>
+          </div>
+
+          <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+            <div class="flex items-center space-x-3 text-[11px] text-[#8282A4]">
+              <span><i class="fa-solid fa-download mr-1"></i>${Number(p.downloads || 0).toLocaleString()}</span>
+              <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>${p.rating || 5}</span>
+            </div>
+            <button onclick="installPlugin('${p.service}', '${p.id}', '${p.name.replace(/'/g, "\\'")}', '${p.icon || ''}', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1 px-3">
+              <i class="fa-solid fa-download mr-1"></i> Install
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      loading.classList.add('hidden');
+      grid.innerHTML = `<div class="col-span-full py-6 text-center text-rose-400 text-xs">Error fetching plugins: ${err.message}</div>`;
+    }
+  }
+
+  async function installPlugin(service, resourceId, name, iconUrl, btn) {
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Installing...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/plugins/install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service, resourceId, name, iconUrl })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Installation failed');
+
+      btn.className = 'arix-btn arix-btn-success text-xs font-semibold py-1 px-3';
+      btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Installed`;
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      alert(`Installation error: ${err.message}`);
+    }
+  }
+
+  async function uninstallPlugin(fileName, btn) {
+    if (!confirm(`Are you sure you want to uninstall and delete "${fileName}"?`)) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/plugins/uninstall`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Uninstall failed');
+
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-trash mr-1"></i> Delete`;
+      alert(`Uninstall error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>

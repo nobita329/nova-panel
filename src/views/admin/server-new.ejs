@@ -1,0 +1,281 @@
+<%- include('../layouts/header') %>
+
+<div class="flex-1 flex">
+  <%- include('../layouts/admin-sidebar') %>
+
+  <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#F4F4F4] tracking-tight font-header">Deploy New Server Instance</h1>
+        <p class="text-sm text-[#8282A4] mt-1">Configure container resources, network allocation, and application templates.</p>
+      </div>
+      <a href="/admin/servers" class="arix-btn arix-btn-secondary text-xs py-1.5 px-3">
+        &larr; Back to Servers
+      </a>
+    </div>
+
+    <% if (error) { %>
+      <div class="mb-5 p-3.5 rounded-[10px] arix-badge-danger w-full flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+          <span><%= error %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <form action="/admin/servers/new" method="POST" id="server-form" class="space-y-6 max-w-4xl">
+
+      <!-- 1. Core Identity & Owner -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <span class="w-6 h-6 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/40 text-xs flex items-center justify-center font-bold mr-2.5">1</span>
+          Server Details & Ownership
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Server Name</label>
+            <input type="text" name="name" placeholder="e.g. My Paper Server" required autofocus class="arix-input">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Server Owner</label>
+            <select name="owner_id" required class="arix-select">
+              <% users.forEach(u => { %>
+                <option value="<%= u.id %>"><%= u.username %> (<%= u.email %>)</option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Description (Optional)</label>
+            <input type="text" name="description" placeholder="A brief description of this server" class="arix-input">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Expiration Date (Auto-Suspend)</label>
+            <input type="date" name="expiration_date" class="arix-input text-xs">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Allocation & Placement -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <span class="w-6 h-6 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/40 text-xs flex items-center justify-center font-bold mr-2.5">2</span>
+          Host Node & Network Allocation
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Host Node</label>
+            <select name="node_id" required class="arix-select">
+              <% nodes.forEach(n => { %>
+                <option value="<%= n.id %>"><%= n.name %> (<%= n.fqdn %>)</option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Primary Port Allocation</label>
+            <% if (allocations.length === 0) { %>
+              <div class="text-xs text-rose-400 p-2.5 bg-rose-500/10 rounded-[7px] border border-rose-500/20">
+                No unassigned ports! Please <a href="/admin/nodes/1/allocations" class="underline font-bold">add allocations here</a> first.
+              </div>
+            <% } else { %>
+              <select name="allocation_id" required class="arix-select font-mono text-xs">
+                <% allocations.forEach(a => { %>
+                  <option value="<%= a.id %>"><%= a.ip %>:<%= a.port %></option>
+                <% }) %>
+              </select>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Resource Limits -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <span class="w-6 h-6 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/40 text-xs flex items-center justify-center font-bold mr-2.5">3</span>
+          Resource Limits
+        </h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Memory (MB)</label>
+            <input type="number" name="memory_limit" value="1024" min="256" step="256" required class="arix-input font-mono">
+            <span class="text-[10px] text-[#5E5E7F] mt-1 block">Default: 1024 MB (1GB)</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">CPU Limit (%)</label>
+            <input type="number" name="cpu_limit" value="100" min="25" step="25" required class="arix-input font-mono">
+            <span class="text-[10px] text-[#5E5E7F] mt-1 block">100% = 1 Full Core</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Disk Space (MB)</label>
+            <input type="number" name="disk_limit" value="5120" min="512" step="512" required class="arix-input font-mono">
+            <span class="text-[10px] text-[#5E5E7F] mt-1 block">Default: 5120 MB (5GB)</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Swap (MB)</label>
+            <input type="number" name="swap_limit" value="0" min="0" step="256" class="arix-input font-mono">
+            <span class="text-[10px] text-[#5E5E7F] mt-1 block">0 = Disabled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Application Template & mcjars.app Auto-Install -->
+      <div class="arix-card p-6 shadow-xl border border-[#42425B]">
+        <h2 class="text-base font-bold text-[#F4F4F4] mb-4 flex items-center font-header">
+          <span class="w-6 h-6 rounded-[7px] bg-[#4A35CF]/20 text-[#7D6BF2] border border-[#4A35CF]/40 text-xs flex items-center justify-center font-bold mr-2.5">4</span>
+          Service Template & Auto-Installer
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Nest Category</label>
+            <select id="nest_select" name="nest_id" required class="arix-select">
+              <% nests.forEach(n => { %>
+                <option value="<%= n.id %>"><%= n.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Egg Template</label>
+            <select id="egg_select" name="egg_id" required class="arix-select">
+              <% eggs.forEach(e => { %>
+                <option value="<%= e.id %>" data-nest="<%= e.nest_id %>" data-image="<%= e.docker_image %>" data-command="<%= e.startup_command %>">
+                  <%= e.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <!-- Minecraft mcjars.app Box -->
+        <div id="mcjars-box" class="mt-5 p-4 rounded-[10px] bg-gradient-to-r from-emerald-500/10 via-[#0B0D2A] to-[#4A35CF]/15 border border-emerald-500/30">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i>
+              <span class="text-xs font-bold text-[#F4F4F4] uppercase tracking-wider">mcjars.app Auto-Downloader</span>
+            </div>
+            <span class="arix-badge-success text-[10px] font-mono font-semibold py-0.5 px-2">Active</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-[#D5D5DB] mb-1">Server Software</label>
+              <select name="mc_type" class="arix-select font-mono text-xs">
+                <option value="PAPER" selected>Paper (Recommended - Spigot/Bukkit)</option>
+                <option value="PURPUR">Purpur (Performance & Extra Options)</option>
+                <option value="VANILLA">Vanilla (Official Mojang)</option>
+                <option value="FABRIC">Fabric (Modded)</option>
+                <option value="FORGE">Forge (Modded)</option>
+                <option value="VELOCITY">Velocity (Proxy)</option>
+                <option value="BUNGEECORD">BungeeCord (Proxy)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-[#D5D5DB] mb-1">Minecraft Version</label>
+              <select name="mc_version" class="arix-select font-mono text-xs">
+                <option value="latest" selected>Latest Build (Default)</option>
+                <option value="26.3">26.3</option>
+                <option value="1.21.4">1.21.4</option>
+                <option value="1.21.1">1.21.1</option>
+                <option value="1.20.4">1.20.4</option>
+                <option value="1.19.4">1.19.4</option>
+                <option value="1.18.2">1.18.2</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.12.2">1.12.2</option>
+                <option value="1.8.8">1.8.8</option>
+              </select>
+            </div>
+          </div>
+          <p class="text-[11px] text-[#8282A4] mt-2">
+            <i class="fa-solid fa-check text-emerald-400 mr-1"></i>
+            Automatically fetches the verified jar from <code>mcjars.app</code> and automatically accepts the Minecraft EULA.
+          </p>
+        </div>
+
+        <!-- Startup Command & Image Overrides -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 pt-4 border-t border-[#42425B]/40">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Docker Image</label>
+            <input type="text" id="docker_image_input" name="docker_image" value="ghcr.io/pterodactyl/yolks:java_25" required
+              class="arix-input font-mono text-xs">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8282A4] mb-1.5">Startup Command</label>
+            <input type="text" id="startup_command_input" name="startup_command" value="java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar nogui" required
+              class="arix-input font-mono text-xs">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex items-center justify-end space-x-3 pt-4">
+        <a href="/admin/servers" class="arix-btn arix-btn-secondary text-xs py-2 px-4">Cancel</a>
+        <button type="submit" id="btn-deploy" class="arix-btn arix-btn-primary text-sm py-2.5 px-6 font-bold">
+          <i class="fa-solid fa-rocket mr-1"></i> Deploy Server
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+</div>
+
+<script>
+  const nestSelect = document.getElementById('nest_select');
+  const eggSelect = document.getElementById('egg_select');
+  const mcjarsBox = document.getElementById('mcjars-box');
+  const imageInput = document.getElementById('docker_image_input');
+  const cmdInput = document.getElementById('startup_command_input');
+
+  function updateEggFilter() {
+    const selectedNest = nestSelect.value;
+    let firstMatch = null;
+
+    Array.from(eggSelect.options).forEach(opt => {
+      const match = opt.getAttribute('data-nest') === selectedNest;
+      opt.style.display = match ? 'block' : 'none';
+      if (match && !firstMatch) firstMatch = opt;
+    });
+
+    if (firstMatch) {
+      eggSelect.value = firstMatch.value;
+      updateTemplateDetails();
+    }
+
+    if (selectedNest === '1') {
+      mcjarsBox.classList.remove('hidden');
+    } else {
+      mcjarsBox.classList.add('hidden');
+    }
+  }
+
+  function updateTemplateDetails() {
+    const opt = eggSelect.selectedOptions[0];
+    if (opt) {
+      const img = opt.getAttribute('data-image');
+      const cmd = opt.getAttribute('data-command');
+      if (img) imageInput.value = img;
+      if (cmd) cmdInput.value = cmd;
+    }
+  }
+
+  nestSelect.addEventListener('change', updateEggFilter);
+  eggSelect.addEventListener('change', updateTemplateDetails);
+
+  updateEggFilter();
+</script>
+
+<%- include('../layouts/footer') %>

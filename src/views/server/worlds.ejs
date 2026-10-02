@@ -1,0 +1,138 @@
+<%- include('../layouts/header') %>
+<%- include('./layout') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-[8px] bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+          <i class="fa-solid fa-earth-americas text-sm"></i>
+        </div>
+        <h2 class="text-xl font-bold text-[#F4F4F4] tracking-tight font-header">World Installer</h2>
+      </div>
+      <p class="text-xs text-[#8282A4] mt-1">Manage installed worlds and deploy custom adventure, lobby, and minigame maps.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- LEFT: ACTIVE WORLDS -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="arix-card p-5">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#42425B]">
+          <h3 class="text-sm font-bold text-[#F4F4F4] font-header">Active Worlds on Disk</h3>
+          <span class="text-xs text-[#8282A4]"><%= activeWorlds.length %> found</span>
+        </div>
+
+        <% if (activeWorlds.length === 0) { %>
+          <div class="py-8 text-center text-[#8282A4]">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 text-[#42425B]"></i>
+            <p class="text-xs">No Minecraft worlds with <code class="text-[#D5D5DB]">level.dat</code> found yet. Start the server or install a map below.</p>
+          </div>
+        <% } else { %>
+          <div class="space-y-2.5">
+            <% activeWorlds.forEach(w => { %>
+              <div class="p-3 rounded-[8px] bg-[#16162C] border border-[#42425B] flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <i class="fa-solid fa-map text-emerald-400 text-sm"></i>
+                  <div>
+                    <h4 class="text-xs font-bold text-white font-mono"><%= w.name %></h4>
+                    <span class="text-[10px] text-[#8282A4]">Last modified: <%= new Date(w.updated_at).toLocaleDateString() %></span>
+                  </div>
+                </div>
+                <button onclick="setActiveWorld('<%= w.name %>', this)" class="arix-btn arix-btn-secondary text-[11px] py-1 px-2.5">
+                  Set Active
+                </button>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- RIGHT: CURATED WORLDS CATALOG -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="arix-card p-5">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#42425B]">
+          <div>
+            <h3 class="text-sm font-bold text-[#F4F4F4] font-header">Curated World Maps</h3>
+            <p class="text-xs text-[#8282A4]">1-click downloadable maps ready to play on your server.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <% curated.forEach(w => { %>
+            <div class="p-4 rounded-[10px] bg-[#16162C] border border-[#42425B] flex flex-col justify-between hover:border-emerald-500/50 transition-all">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-emerald-500/20 text-emerald-400"><%= w.category %></span>
+                  <span class="text-xs text-[#8282A4]"><i class="fa-solid fa-download mr-1"></i><%= Number(w.downloads).toLocaleString() %></span>
+                </div>
+                <h4 class="text-sm font-bold text-white mb-1.5 font-header"><%= w.name %></h4>
+                <p class="text-xs text-[#8282A4] mb-3 line-clamp-2"><%= w.tag %></p>
+              </div>
+
+              <div class="pt-3 border-t border-[#42425B]/60 flex items-center justify-between">
+                <span class="text-xs text-[#8282A4]"><%= w.size %></span>
+                <button onclick="installWorld('<%= w.id %>', '<%= w.name.replace(/'/g, "\\'") %>', this)" class="arix-btn arix-btn-primary text-xs font-semibold py-1 px-3">
+                  <i class="fa-solid fa-download mr-1"></i> Install World
+                </button>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  async function setActiveWorld(worldName, btn) {
+    if (!confirm(`Set "${worldName}" as your primary world in server.properties?`)) return;
+
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/properties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ properties: { 'level-name': worldName } })
+      });
+      if (!res.ok) throw new Error('Failed to update server properties');
+      alert(`Primary world set to "${worldName}". Restart your server to load it.`);
+      btn.disabled = false;
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+      btn.disabled = false;
+    }
+  }
+
+  async function installWorld(worldId, name, btn) {
+    const customName = prompt(`Enter directory name for "${name}":`, name.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+    if (!customName) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Installing...`;
+
+    try {
+      const res = await fetch(`/server/<%= server.id %>/api/worlds/install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ worldId, customName })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+      alert(`World "${name}" installed to folder "${customName}".`);
+      window.location.reload();
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-download mr-1"></i> Install World`;
+      alert(`Install error: ${err.message}`);
+    }
+  }
+</script>
+
+<%- include('../layouts/footer') %>
